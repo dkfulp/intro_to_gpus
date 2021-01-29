@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N Generic_script
+
+#PBS -l select=1:ncpus=1:ngpus=1:gpu_model=k20:mem=1gb
+#PBS -l Walltime=00:120:00
+
+module purge all
+module add gcc/5.4.0 cuda/10.0.130-gcc
+
+cd /home/mlhickm/intro_to_gpu/beginner_examples/example_1
+rm a.out
+make
+./a.out
