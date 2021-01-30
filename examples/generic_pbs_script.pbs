@@ -5,7 +5,8 @@
 #PBS -l Walltime=00:120:00
 
 module purge all
-module add gcc/5.4.0 cuda/10.0.130-gcc
+module add opencv/4.2.0-gcc
+module add cuda/9.2.88-gcc
 
 cd /home/mlhickm/intro_to_gpu/beginner_examples/example_1
 rm a.out
