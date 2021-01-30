@@ -5,10 +5,11 @@
 #PBS -l Walltime=00:120:00
 
 module purge all
+module add gcc/7.1.0
 module add opencv/4.2.0-gcc
 module add cuda/9.2.88-gcc
 
-cd /home/dakotaf/coursework/intro_to_gpus/examples/example_2
+cd /home/dakotaf/coursework/intro_to_gpus/examples/example_4
 rm a.out
 make
 ./a.out
