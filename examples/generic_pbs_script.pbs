@@ -8,7 +8,7 @@ module purge all
 module add opencv/4.2.0-gcc
 module add cuda/9.2.88-gcc
 
-cd /home/mlhickm/intro_to_gpu/beginner_examples/example_1
+cd /home/dakotaf/coursework/intro_to_gpus/examples/example_1
 rm a.out
 make
 ./a.out
