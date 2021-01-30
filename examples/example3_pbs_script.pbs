@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -N Generic_script
+
+#PBS -l select=1:ncpus=1:ngpus=1:gpu_model=k20:mem=1gb
+#PBS -l Walltime=00:120:00
+
+module purge all
+module add opencv/4.2.0-gcc
+module add cuda/9.2.88-gcc
+
+cd /home/dakotaf/coursework/intro_to_gpus/examples/example_2
+rm a.out
+make
+./a.out
