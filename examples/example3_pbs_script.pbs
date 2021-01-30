@@ -12,4 +12,4 @@ module add cuda/9.2.88-gcc
 cd /home/dakotaf/coursework/intro_to_gpus/examples/example_3
 rm a.out
 make
-cuda-memcheck ./a.out
+cuda-gdb --args ./a.out
