@@ -126,8 +126,8 @@ int main(int argc, char const *argv[])
 
     checkResult(reference, outfile, 1e-5);
 
-   cudaFree(d_imrgba);
-   cudaFree(d_grey);
+    cudaFree(d_imrgba);
+    cudaFree(d_grey);
 
     return 0;
 }

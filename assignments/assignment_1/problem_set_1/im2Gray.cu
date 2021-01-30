@@ -22,7 +22,13 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
  /*
    Your kernel here: Make sure to check for boundary conditions
   */
-
+  int x=blockIdx.x*blockDim.x+threadIdx.x;
+  int y=blockIdx.y*blockDim.y+threadIdx.y;
+  if(x < numCols && y < numRows) {
+    int grayOffset = y*numCols + x;
+    uchar4 rgba_pixel = d_in[grayOffset];
+    d_grey[grayOffset] = (unsigned char)((float)rgba_pixel[0]*0.299f + (float)rgba_pixel[1]*0.587f + (float)rgba_pixel[2]*0.114f);
+  }
 }
 
 
