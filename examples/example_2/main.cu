@@ -11,7 +11,9 @@
 
 __global__ void kernel(int *a, int N) {
   int i=blockIdx.x*blockDim.x+threadIdx.x;
-  a[i]=i;
+  if (i < N){
+    a[i]=i;
+  }
 }
 
 int main() {
