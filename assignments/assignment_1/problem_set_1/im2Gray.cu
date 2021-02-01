@@ -36,10 +36,13 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
 
 
 void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols){
+    // Works but terrible
+    //dim3 grid(numRows,numCols,1);
+  
     // Make enough blocks equal to number of Rows in Image
-    dim3 grid(numRows,numCols,1);
+    dim3 grid(4,4,1);
     // Make enough threads per block equal to number of Columns in Image
-    dim3 block(1,1,1);
+    dim3 block(ceil(numRows/4),ceil(numCols/4),1);
     // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
     cudaDeviceSynchronize();
