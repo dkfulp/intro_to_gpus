@@ -1,4 +1,5 @@
 #include "im2Gray.h"
+#include <math.h> 
 
 #define BLOCK 32
 
