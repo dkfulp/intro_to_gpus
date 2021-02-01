@@ -2,8 +2,6 @@
 
 #define BLOCK 32
 
-
-
 /*
  
   Given an input image d_in, perform the grayscale operation 
@@ -18,16 +16,19 @@
  */
 __global__ 
 void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
+  // Column Indicator
+  int x = blockIdx.x * blockDim.x + threadIdx.x;
+  // Row Indicator
+  int y = blockIdx.y * blockDim.y + threadIdx.y;
 
- /*
-   Your kernel here: Make sure to check for boundary conditions
-  */
-  int x=blockIdx.x*blockDim.x+threadIdx.x;
-  int y=blockIdx.y*blockDim.y+threadIdx.y;
+  // Only do valid pixel locations
   if(x < numCols && y < numRows) {
-    int grayOffset = y*numCols + x;
-    uchar4 rgba_pixel = d_in[grayOffset];
-    d_grey[grayOffset] = (unsigned char)((float)rgba_pixel.x*0.299f + (float)rgba_pixel.y*0.587f + (float)rgba_pixel.z*0.114f);
+    // Get one dimension array offset
+    int grey_Offset = y * numCols + x;
+    // Get corresponding rgba pixel at this location
+    uchar4 rgba_pixel = d_in[grey_Offset];
+    // Calculate new grey value
+    d_grey[grey_Offset] = (unsigned char)((float)rgba_pixel.x*0.299f + (float)rgba_pixel.y*0.587f + (float)rgba_pixel.z*0.114f);
   }
 }
 
@@ -35,11 +36,11 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
 
 
 void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols){
-    // configure launch params here 
-    
-    dim3 block(1,1,1);
-    dim3 grid(1,1, 1);
-
+    // Make enough blocks equal to number of Rows in Image
+    dim3 grid(numRows,1, 1);
+    // Make enough threads per block equal to number of Columns in Image
+    dim3 block(numCols,1,1);
+    // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
