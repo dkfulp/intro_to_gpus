@@ -1,5 +1,4 @@
 #include "im2Gray.h"
-#include <math.h> 
 
 #define BLOCK 32
 
@@ -43,7 +42,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     // Make enough blocks equal to number of Rows in Image
     dim3 grid(4,4,1);
     // Make enough threads per block equal to number of Columns in Image
-    dim3 block(ceil(numRows/4),ceil(numCols/4),1);
+    dim3 block((numRows/4) + 1,(numCols/4) + 1,1);
     // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
     cudaDeviceSynchronize();
