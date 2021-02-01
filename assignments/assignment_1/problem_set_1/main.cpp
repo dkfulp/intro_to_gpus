@@ -23,10 +23,10 @@
 */
 
 
-void checkApproxResults(unsigned char *ref, unsigned char *gpu, size_t numElems){
+void checkApproxResults(unsigned char *ref, unsigned char *gpu, size_t numElems, float eps){
 
     for(int i = 0; i < numElems; i++){
-        if(ref[i] - gpu[i] > 1e-5){
+        if(ref[i] - gpu[i] > eps){
             std::cerr << "Error at position " << i << "\n"; 
 
             std::cerr << "Reference:: " << std::setprecision(17) << +ref[i] <<"\n";
@@ -49,7 +49,7 @@ void checkResult(const std::string &reference_file, const std::string &output_fi
     unsigned char *refPtr = ref_img.ptr<unsigned char>(0);
     unsigned char *oPtr = out_img.ptr<unsigned char>(0);
 
-    checkApproxResults(refPtr, oPtr, ref_img.rows*ref_img.cols*ref_img.channels());
+    checkApproxResults(refPtr, oPtr, ref_img.rows*ref_img.cols*ref_img.channels(), eps);
     std::cout << "PASSED!";
 
 
@@ -124,7 +124,8 @@ int main(int argc, char const *argv[])
 
    // check if the caclulation was correct to a degree of tolerance
 
-    checkResult(reference, outfile, 1e-5);
+    //checkResult(reference, outfile, 1e-5);
+    checkResult(reference, outfile, 2);
 
     cudaFree(d_imrgba);
     cudaFree(d_grey);
