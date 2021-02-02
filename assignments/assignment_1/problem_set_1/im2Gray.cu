@@ -43,7 +43,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     // Configuration 2
     size_t x = (size_t)((float)BLOCK/2) + 1;
     size_t y = (size_t)((float)BLOCK/2) + 1;
-    dim3 grid(x,y,1); 
+    dim3 grid((BLOCK/2)+1,(BLOCK/2)+1,1); 
 
     // Configuration 3
     //dim3 grid(1,numRows,1);
@@ -55,7 +55,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     // Configuration 2
     size_t x2 = (size_t)((float)numCols/(float)x) + 1;
     size_t y2 = (size_t)((float)numRows/(float)y) + 1;
-    dim3 block(x2,y2,1);  
+    dim3 block((numCols/((BLOCK/2)+1))+1,(numRows/((BLOCK/2)+1))+1,1);  
 
     // Configuration 3
     //dim3 block(numCols,1,1); 
