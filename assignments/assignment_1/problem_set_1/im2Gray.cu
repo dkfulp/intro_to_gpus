@@ -46,7 +46,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     //dim3 grid(numCols,numRows,1); 
 
     // Configuration 3
-    dim3 grid(numRows,1,1);
+    dim3 grid(1,numRows,1);
 
     // Given the number of total blocks, determine the number of threads needed per block
     // Configuration 1
