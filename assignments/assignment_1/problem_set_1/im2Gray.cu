@@ -1,7 +1,7 @@
 #include "im2Gray.h"
 #include <math.h> 
 
-#define BLOCK 
+#define BLOCK 32
 
 /*
  
