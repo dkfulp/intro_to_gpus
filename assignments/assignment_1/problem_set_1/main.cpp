@@ -139,8 +139,10 @@ int main(int argc, char const *argv[]){
     //checkResult(reference, outfile, 1e-5);
     checkResult(reference, outfile, 2);
 
-    cudaFree(d_imrgba);
-    cudaFree(d_grey);
+    if (!serial){
+        cudaFree(d_imrgba);
+        cudaFree(d_grey);
+    }
 
     return 0;
 }
