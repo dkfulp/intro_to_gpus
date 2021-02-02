@@ -1,7 +1,7 @@
 #include "im2Gray.h"
 #include <math.h> 
 
-#define BLOCK 32
+#define BLOCK 
 
 /*
  
@@ -38,29 +38,38 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
 
 void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols){
     // Ensure there are not over BLOCK number of blocks
+    // Given the number of total blocks, determine the number of threads needed per block
+
     // Configuration 1
     //dim3 grid(numCols,numRows,1); 
-
-    // Configuration 2
-    size_t x = std::ceil((float)BLOCK/2);
-    size_t y = std::ceil((float)BLOCK/2);
-    std::cout << "x: " << x << " y: " << y << std::endl;
-    dim3 grid(x,y,1); 
-
-    // Configuration 3
-    //dim3 grid(1,numRows,1);
-
-    // Given the number of total blocks, determine the number of threads needed per block
-    // Configuration 1
     //dim3 block(1,1,1); 
 
-    // Configuration 2
-    size_t x2 = std::ceil((float)numCols/x);
-    size_t y2 = std::ceil((float)numRows/x);
-    std::cout << "x2: " << x2 << " y2: " << y2 << std::endl;
-    dim3 block(64,64,1);  
 
+    // Configuration 2
+    size_t grid_x = std::ceil((float)BLOCK/2);
+    size_t grid_y = std::ceil((float)BLOCK/2);
+    size_t block_x = std::ceil((float)numCols/x);
+    size_t block_y = std::ceil((float)numRows/x);
+    size_t block_size = block_x * block_y;
+    size_t new_block = BLOCK;
+
+    while (block_size > 1024){
+      new_block = new_block * 2;
+      grid_x = std::ceil((float)new_block/2);
+      grid_y = std::ceil((float)new_block/2);
+      block_x = std::ceil((float)numCols/x);
+      block_y = std::ceil((float)numRows/x);
+      block_size = block_x * block_y;
+    } 
+
+    std::cout << "x: " << grid_x << " y: " << grid_y << std::endl;
+    dim3 grid(grid_x,grid_y,1); 
+    std::cout << "x2: " << block_x << " y2: " << block_y << std::endl;
+    dim3 block(block_x,block_y,1);  
+
+    
     // Configuration 3
+    //dim3 grid(1,numRows,1);
     //dim3 block(numCols,1,1); 
 
     // Call Kernel
