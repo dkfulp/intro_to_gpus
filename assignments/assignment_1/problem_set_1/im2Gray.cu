@@ -48,8 +48,8 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     // Configuration 2
     size_t grid_x = std::ceil((float)BLOCK/2);
     size_t grid_y = std::ceil((float)BLOCK/2);
-    size_t block_x = std::ceil((float)numCols/x);
-    size_t block_y = std::ceil((float)numRows/x);
+    size_t block_x = std::ceil((float)numCols/grid_x);
+    size_t block_y = std::ceil((float)numRows/grid_y);
     size_t block_size = block_x * block_y;
     size_t new_block = BLOCK;
 
@@ -57,8 +57,8 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
       new_block = new_block * 2;
       grid_x = std::ceil((float)new_block/2);
       grid_y = std::ceil((float)new_block/2);
-      block_x = std::ceil((float)numCols/x);
-      block_y = std::ceil((float)numRows/x);
+      block_x = std::ceil((float)numCols/grid_x);
+      block_y = std::ceil((float)numRows/grid_y);
       block_size = block_x * block_y;
     } 
 
@@ -67,7 +67,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     std::cout << "x2: " << block_x << " y2: " << block_y << std::endl;
     dim3 block(block_x,block_y,1);  
 
-    
+
     // Configuration 3
     //dim3 grid(1,numRows,1);
     //dim3 block(numCols,1,1); 
