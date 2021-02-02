@@ -37,14 +37,17 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
 
 void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols){
     // Ensure there are not over BLOCK number of blocks
-    dim3 grid((size_t)((float)BLOCK/2),(size_t)((float)BLOCK/2),1);
+    // 1. dim3 grid((size_t)((float)BLOCK/2),(size_t)((float)BLOCK/2),1);
+    dim3 grid(numCols,numRows,1);
+
     // Given the number of total blocks, determine the number of threads needed per block
-    dim3 block((size_t)((float)numCols/((float)BLOCK/2)),(size_t)((float)numRows/((float)BLOCK/2)),1);
+    // 1. dim3 block((size_t)((float)numCols/((float)BLOCK/2)),(size_t)((float)numRows/((float)BLOCK/2)),1);
+    dim3 block(1,1,1);
+
     // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
-    
 }
 
 
