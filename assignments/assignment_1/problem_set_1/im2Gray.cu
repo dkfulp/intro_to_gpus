@@ -58,7 +58,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     size_t x2 = std::ceil((float)numCols/x);
     size_t y2 = std::ceil((float)numRows/x);
     std::cout << "x2: " << x2 << " y2: " << y2 << std::endl;
-    dim3 block(x2,x2,1);  
+    dim3 block(64,64,1);  
 
     // Configuration 3
     //dim3 block(numCols,1,1); 
