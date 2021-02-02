@@ -46,6 +46,7 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
 
 
     // Configuration 2
+    /**
     size_t grid_x = std::ceil((float)BLOCK/2);
     size_t grid_y = std::ceil((float)BLOCK/2);
     size_t block_x = std::ceil((float)numCols/grid_x);
@@ -66,11 +67,11 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     dim3 grid(grid_x,grid_y,1); 
     std::cout << "x2: " << block_x << " y2: " << block_y << std::endl;
     dim3 block(block_x,block_y,1);  
-
+    **/
 
     // Configuration 3
-    //dim3 grid(1,numRows,1);
-    //dim3 block(numCols,1,1); 
+    dim3 grid(1,numRows,1);
+    dim3 block(numCols,1,1); 
 
     // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
