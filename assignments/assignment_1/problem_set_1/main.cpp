@@ -107,8 +107,8 @@ int main(int argc, char const *argv[]){
         auto start = std::chrono::high_resolution_clock::now(); 
         im2Gray_serial(h_imrgba, h_grey, img.rows, img.cols);
         auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(stop - start); 
-        std:;cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+        std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
     } else {
         checkCudaErrors(cudaMalloc((void **)&d_imrgba, sizeof(uchar4) * numPixels));
         checkCudaErrors(cudaMalloc((void **)&d_grey, sizeof(unsigned char) * numPixels));
