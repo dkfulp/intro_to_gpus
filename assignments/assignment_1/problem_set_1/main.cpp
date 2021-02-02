@@ -47,7 +47,7 @@ void checkResult(const std::string &reference_file, const std::string &output_fi
 void im2Gray_serial(uchar4 *h_in, unsigned char *h_grey, int numRows, int numCols){
     // Iterate over all pixels
     int x, y;
-    for (x = 0, x < numCols; x++){
+    for (x = 0; x < numCols; x++){
         for (y = 0; y < numRows; y++){
             // Get pixel location
             int grey_Offset = y * numCols + x;
