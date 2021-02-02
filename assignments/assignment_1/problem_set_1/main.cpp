@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include <chrono>
 
 #include "im2Gray.h"
 
@@ -103,7 +104,11 @@ int main(int argc, char const *argv[]){
     h_grey = grayimage.ptr<unsigned char>(0);
 
     if (serial){
+        auto start = chrono::high_resolution_clock::now(); 
         im2Gray_serial(h_imrgba, h_grey, img.rows, img.cols);
+        auto stop = chrono::high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start); 
+        std:;cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
     } else {
         checkCudaErrors(cudaMalloc((void **)&d_imrgba, sizeof(uchar4) * numPixels));
         checkCudaErrors(cudaMalloc((void **)&d_grey, sizeof(unsigned char) * numPixels));
