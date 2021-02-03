@@ -4,7 +4,7 @@
 #include "utils.h"
 
 
-void launch_im2gray(uchar4* d_rgba, unsigned char *d_grey, size_t numRows, size_t numCols);
+void launch_im2gray(uchar4* d_rgba, unsigned char *d_grey, size_t numRows, size_t numCols, int BLOCK);
 
 
 
