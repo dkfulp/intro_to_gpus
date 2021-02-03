@@ -68,25 +68,35 @@ int main(int argc, char const *argv[]){
     std::string outfile;
     std::string reference;
     int serial = 0; // 0 for False, 1 for True
+    int BLOCK = 0;
 
     switch (argc){
     case 2:
         infile = std::string(argv[1]);
         outfile = "cinque_gpu_gray.png";
         reference = "lena_gray.png";
+        BLOCK = 32;
         break;
     case 3:
         infile = std::string(argv[1]);
         outfile = std::string(argv[2]);
         reference = "lena_gray.png";
+        BLOCK = 32;
         break;
     case 4:
         infile = std::string(argv[1]);
         outfile = std::string(argv[2]);
         reference = std::string(argv[3]);
+        BLOCK = 32;
+        break;
+    case 5:
+        infile = std::string(argv[1]);
+        outfile = std::string(argv[2]);
+        reference = std::string(argv[3]);
+        BLOCK = std::stoi(std::string(argv[4]));
         break;
     default:
-        std::cerr << "Usage ./gray <in_image> <out_image> <reference_image>\n";
+        std::cerr << "Usage ./gray <in_image> <out_image> <reference_image> <block_size>\n";
         exit(1);
     }
 
@@ -116,7 +126,7 @@ int main(int argc, char const *argv[]){
         checkCudaErrors(cudaMemcpy(d_imrgba, h_imrgba, sizeof(uchar4) * numPixels, cudaMemcpyHostToDevice));
 
         // call the kernel
-        launch_im2gray(d_imrgba, d_grey, img.rows, img.cols);
+        launch_im2gray(d_imrgba, d_grey, img.rows, img.cols, BLOCK);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
