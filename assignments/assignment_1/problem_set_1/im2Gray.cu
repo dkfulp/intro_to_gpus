@@ -69,9 +69,23 @@ void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t 
     dim3 block(block_x,block_y,1);  
     **/
 
+
     // Configuration 3
-    dim3 grid(1,numRows,1);
-    dim3 block(numCols,1,1); 
+    //dim3 grid(1,numRows,1);
+    //dim3 block(numCols,1,1); 
+
+
+    // Configuration 4
+    // Ensure BLOCK is valid
+    size_t block_size = BLOCK;
+    if (block_size > 32){
+      block_size = 32;
+    } else if (block_size <= 0){
+      block_size = 1;
+    }
+    // Set grid and block dimensions
+    dims3 grid(std::ceil((float)numCols/(float)BLOCK),std::ceil((float)numRows/(float)BLOCK),1);
+    dim3 block(BLOCK, BLOCK, 1);
 
     // Call Kernel
     im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
