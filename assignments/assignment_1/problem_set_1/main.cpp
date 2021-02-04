@@ -67,7 +67,7 @@ int main(int argc, char const *argv[]){
     std::string infile;
     std::string outfile;
     std::string reference;
-    int serial = 1; // 0 for False, 1 for True
+    int serial = 0; // 0 for False, 1 for True
     int BLOCK = 0;
 
     switch (argc){
