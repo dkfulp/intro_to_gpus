@@ -12,4 +12,4 @@ module add cuda/9.2.88-gcc
 cd /home/dakotaf/coursework/intro_to_gpus/examples/example_4
 rm a.out
 make
-./a.out
+nvprof ./a.out
