@@ -16,7 +16,7 @@
  
  */
 __global__ 
-void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols, size_t BLOCK){
+void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
   // Create shared memory uchar4 to hold tile data of size equal to BLOCK
   __shared__ uchar4 pixels[BLOCK][BLOCK];
   // Create shared memory unsigned char array to hold grey outputs
