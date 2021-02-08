@@ -2,6 +2,7 @@
 #include <math.h> 
 
 #define BLOCK 32
+#define TILE BLOCK
 
 /*
  
@@ -18,9 +19,9 @@
 __global__ 
 void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
   // Create shared memory uchar4 to hold tile data of size equal to BLOCK
-  __shared__ uchar4 pixels[BLOCK][BLOCK];
+  __shared__ uchar4 pixels[TILE][TILE];
   // Create shared memory unsigned char array to hold grey outputs
-  __shared__ unsigned char grey_pixels[BLOCK][BLOCK];
+  __shared__ unsigned char grey_pixels[TILE][TILE];
 
   // Get location of pixel in global memory
   int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -53,6 +54,7 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols){
     int grey_offset = gl_row * numCols + gl_col;
     d_grey[grey_offset] = grey_pixels[sh_row][sh_col];
   }
+  // TODO: Test different ways of writing out to device and which is best.
 }
 
 
