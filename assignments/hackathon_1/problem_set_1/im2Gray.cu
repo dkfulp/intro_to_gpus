@@ -1,7 +1,7 @@
 #include "im2Gray.h"
 #include <math.h> 
 
-//#define BLOCK 32
+#define BLOCK 32
 
 /*
  
@@ -16,11 +16,11 @@
  
  */
 __global__ 
-void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols, size_t block_size){
-  // Create shared memory uchar4 to hold tile data of size equal to block_size
-  __shared__ uchar4 pixels[block_size][block_size];
+void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols, size_t BLOCK){
+  // Create shared memory uchar4 to hold tile data of size equal to BLOCK
+  __shared__ uchar4 pixels[BLOCK][BLOCK];
   // Create shared memory unsigned char array to hold grey outputs
-  __shared__ unsigned char grey_pixels[block_size][block_size];
+  __shared__ unsigned char grey_pixels[BLOCK][BLOCK];
 
   // Get location of pixel in global memory
   int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -58,19 +58,13 @@ void im2Gray(uchar4 *d_in, unsigned char *d_grey, int numRows, int numCols, size
 
 
 
-void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols, size_t block_size){
-    // Ensure block_size is valid
-    if (block_size > 32){
-      block_size = 32;
-    } else if (block_size <= 0){
-      block_size = 1;
-    }
+void launch_im2gray(uchar4 *d_in, unsigned char* d_grey, size_t numRows, size_t numCols){
     // Set grid and block dimensions
-    dim3 grid(std::ceil((float)numCols/(float)block_size),std::ceil((float)numRows/(float)block_size),1);
-    dim3 block(block_size, block_size, 1);
+    dim3 grid(std::ceil((float)numCols/(float)BLOCK),std::ceil((float)numRows/(float)BLOCK),1);
+    dim3 block(BLOCK, BLOCK, 1);
 
     // Call Kernel
-    im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols, block_size);
+    im2Gray<<<grid,block>>>(d_in, d_grey, numRows, numCols);
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
 }
