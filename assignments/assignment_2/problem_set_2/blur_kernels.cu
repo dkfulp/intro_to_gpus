@@ -36,7 +36,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                                         int pixel_offset = in_row * num_cols + in_col;
 
                                         // Multiply current filter location by target pixel and add to running sum
-                                        blur_sum += (int)( (float)d_in[pixel_offset] * filter[filter_pos] );
+                                        blur_sum += (int)( (float)d_in[pixel_offset] * d_filter[filter_pos] );
                                         // Increment number of pixels used in blur average
                                         blur_pixel_count++;
                                 }
@@ -120,27 +120,27 @@ void gaussianBlurKernel(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, si
         dim3 block(BLOCK, BLOCK, 1);
 
         // Seperate out each channel into seperate arrays
-        separateChannels<<<gridSize, blockSize>>>(d_imrgba, d_red, d_green, d_blue, num_rows, num_cols);
+        separateChannels<<<grid, block>>>(d_imrgba, d_red, d_green, d_blue, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the red pixel array
-        gaussianBlurGlobal<<<gridSize, blockSize>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the green pixel array
-        gaussianBlurGlobal<<<gridSize, blockSize>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the blue pixel array
-        gaussianBlurGlobal<<<gridSize, blockSize>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Recombine the blurred channels into a single uchar4 array
-        recombineChannels<<<gridSize, blockSize>>>(d_rblurred, d_gblurred, d_bblurred, d_oimrgba, num_rows, num_cols);
+        recombineChannels<<<grid, block>>>(d_rblurred, d_gblurred, d_bblurred, d_oimrgba, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());   
 }
