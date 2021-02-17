@@ -49,7 +49,7 @@ void gaussian_blur_filter(float *arr, const int f_sz, const float f_sigma = 0.2)
     float norm_const = 0.0; // normalization const for the kernel
 
     for (int r = -f_sz / 2; r <= f_sz / 2; r++){
-        for (int c = -f_sz / 2; c <= c_sz / 2; c++){
+        for (int c = -f_sz / 2; c <= f_sz / 2; c++){
             float fSum = expf(-(float)(r * r + c * c) / (2 * f_sigma * f_sigma));
             arr[(r + f_sz / 2) * f_sz + (c + f_sz / 2)] = fSum;
             filterSum += fSum;
@@ -92,7 +92,6 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
                         int pixel_offset = in_row * num_cols + in_col;
 
                         // Multiply current filter location by target pixel and add to sum
-                        (unsigned char)((float)rgba_pixel.x * 0.299f + (float)rgba_pixel.y * 0.587f + (float)rgba_pixel.z * 0.114f);
                         blur_sum += (int)( (float)in[pixel_offset] * filter[filter_pos] );
                         // Increment number of pixels used in blur average
                         blur_pixel_count++;
@@ -201,7 +200,7 @@ int main(int argc, char const *argv[]){
         exit(1);
     }
     cv::cvtColor(img, imrgba, cv::COLOR_BGR2RGBA);
-    oimg.create(img.rows, img.cols, CV_8UC4);
+    o_img.create(img.rows, img.cols, CV_8UC4);
     const size_t numPixels = img.rows * img.cols;
 
     // Create pointers to uchar4 arrays 
@@ -260,9 +259,9 @@ int main(int argc, char const *argv[]){
     serialSeparateChannels(h_in_img, h_red, h_green, h_blue, img.rows, img.cols);
 
     // Perform Gaussian Blur over each pixel channnel
-    serialGaussianBlur(h_red, h_red_blurred, img.rows, img.cols, h_filter, const int fWidth);
-    serialGaussianBlur(h_green, h_green_blurred, img.rows, img.cols, h_filter, const int fWidth);
-    serialGaussianBlur(h_blue, h_blue_blurred, img.rows, img.cols, h_filter, const int fWidth);
+    serialGaussianBlur(h_red, h_red_blurred, img.rows, img.cols, h_filter, fWidth);
+    serialGaussianBlur(h_green, h_green_blurred, img.rows, img.cols, h_filter, fWidth);
+    serialGaussianBlur(h_blue, h_blue_blurred, img.rows, img.cols, h_filter, fWidth);
 
     // Recombine each of the RGB channels
     serialRecombineChannels(h_red_blurred, h_green_blurred, h_blue_blurred, r_o_img, img.rows, img.cols);
@@ -276,12 +275,12 @@ int main(int argc, char const *argv[]){
 
     // Output Stage 
     // Create output image using GPU Results
-    cv::Mat output(img.rows, img.cols, CV_8UC4, (void *)h_o_img); // generate GPU output image.
-    bool suc = cv::imwrite(outfile.c_str(), output);
-    if (!suc){
-        std::cerr << "Couldn't write GPU image!\n";
-        exit(1);
-    }
+    //cv::Mat output(img.rows, img.cols, CV_8UC4, (void *)h_o_img); // generate GPU output image.
+    //bool suc = cv::imwrite(outfile.c_str(), output);
+    //if (!suc){
+    //    std::cerr << "Couldn't write GPU image!\n";
+    //    exit(1);
+    //}
     // Create output image using Serial Results
     cv::Mat output_s(img.rows, img.cols, CV_8UC4, (void *)r_o_img); // generate serial output image.
     suc = cv::imwrite(reference.c_str(), output_s);
@@ -291,18 +290,18 @@ int main(int argc, char const *argv[]){
     }
 
     // Compare results to ensure accuracy
-    checkResult(reference, outfile, 1e-5);
+    //checkResult(reference, outfile, 1e-5);
 
     // Free Allocated Memory
-    cudaFree(d_in_img);
-    cudaFree(d_o_img);
-    cudaFree(d_red);
-    cudaFree(d_green);
-    cudaFree(d_blue);
-    cudaFree(d_red_blurred);
-    cudaFree(d_green_blurred);
-    cudaFree(d_blue_blurred);
-    cudaFree(d_filter);
+    //cudaFree(d_in_img);
+    //cudaFree(d_o_img);
+    //cudaFree(d_red);
+    //cudaFree(d_green);
+    //cudaFree(d_blue);
+    //cudaFree(d_red_blurred);
+    //cudaFree(d_green_blurred);
+    //cudaFree(d_blue_blurred);
+    //cudaFree(d_filter);
     delete[] h_red;
     delete[] h_green;
     delete[] h_blue;
