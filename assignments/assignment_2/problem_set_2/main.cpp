@@ -283,7 +283,7 @@ int main(int argc, char const *argv[]){
     //}
     // Create output image using Serial Results
     cv::Mat output_s(img.rows, img.cols, CV_8UC4, (void *)r_o_img); // generate serial output image.
-    suc = cv::imwrite(reference.c_str(), output_s);
+    bool suc = cv::imwrite(reference.c_str(), output_s);
     if (!suc){
         std::cerr << "Couldn't write serial image!\n";
         exit(1);
@@ -307,7 +307,7 @@ int main(int argc, char const *argv[]){
     delete[] h_blue;
     delete[] h_red_blurred;
     delete[] h_green_blurred;
-    delete[] h_blue_blurred
+    delete[] h_blue_blurred;
     delete[] h_filter;
     return 0;
 }
