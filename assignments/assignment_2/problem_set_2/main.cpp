@@ -161,7 +161,7 @@ int main(int argc, char const *argv[]){
 
     // Gaussian Blur Parameters
     const int fWidth = 9;
-    const float fDev = 0.2;
+    const float fDev = 2;
 
     // File String Parameters
     std::string infile;
