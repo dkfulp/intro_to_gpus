@@ -108,7 +108,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             int result_offset = row * num_cols + col;
             out[result_offset] = (unsigned char)blur_result;
 
-            std::cout << "Pixel Row: " << row << " Col: " << col << " Original: " << in[result_offset] << " New: " << out[result_offset] << std::endl;
+            std::cout << "Pixel Row: " << row << " Col: " << col << " Original: " << (int)in[result_offset] << " New: " << (int)out[result_offset] << std::endl;
         }
     }
 }
