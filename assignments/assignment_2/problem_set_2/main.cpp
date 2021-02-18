@@ -80,8 +80,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             // Setup current loop variables
             int blur_sum = 0;
             int filter_pos = 0;
-            int blur_pixel_count = 0;
-            float filter_sum = 0;
+            //int blur_pixel_count = 0;
 
             // Iterate from the furthest back row to the furthest forward row
             for (in_row = row - blur_offset; in_row <= row + blur_offset; in_row++){
@@ -95,36 +94,32 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
                         // Multiply current filter location by target pixel and add to sum
                         blur_sum += (int)( (float)in[pixel_offset] * filter[filter_pos] );
                         // Increment number of pixels used in blur average
-                        blur_pixel_count++;
+                        //blur_pixel_count++;
                     }
-
-                    filter_sum += filter[filter_pos];
                     // Always increment filter location
                     filter_pos++;
                 }
             }
 
             // Divide current sum by the number of elements in the filter
-            int blur_result = (int)( (float)blur_sum / (float)blur_pixel_count );
+            //int blur_result = (int)( (float)blur_sum / (float)blur_pixel_count );
 
             // Store results in the correct location of the output array
             int result_offset = row * num_cols + col;
             out[result_offset] = (unsigned char)blur_sum;
-
-            //std::cout << "Original Pixel: " << (int)in[result_offset] << std::endl;
-            //std::cout << "Blur Sum: " << blur_sum << std::endl;
-            //std::cout << "Filter Sum: " << filter_sum << std::endl;
         }
     }
 }
 
-void serialSeparateChannels(uchar4 *imrgba, unsigned char *r, unsigned char *g, unsigned char *b, const int rows, const int cols){
-    // Iterate over all pixels
-    int x, y;
-    for (x = 0; x < cols; x++){
-        for (y = 0; y < rows; y++){
+void serialSeparateChannels(uchar4 *imrgba, unsigned char *r, unsigned char *g, unsigned char *b, const int num_rows, const int num_cols){
+    int row, col;
+
+    // Iterate over each row
+    for (row = 0; row < num_rows; row++){
+        // Iterate over each col
+        for (col = 0; col < num_cols; col++){
             // Get pixel location
-            int offset = y * cols + x;
+            int offset = row * num_cols + col;
             // Get corresponding rgba pixel at this location
             uchar4 rgba_pixel = imrgba[offset];
             // Save each pixel element to correct array
@@ -135,13 +130,15 @@ void serialSeparateChannels(uchar4 *imrgba, unsigned char *r, unsigned char *g, 
     }
 }
 
-void serialRecombineChannels(unsigned char *r, unsigned char *g, unsigned char *b, uchar4 *orgba, const int rows, const int cols){
-    // Iterate over all pixels
-    int x, y;
-    for (x = 0; x < cols; x++){
-        for (y = 0; y < rows; y++){
+void serialRecombineChannels(unsigned char *r, unsigned char *g, unsigned char *b, uchar4 *orgba, const int num_rows, const int num_cols){
+    int row, col;
+
+    // Iterate over each row
+    for (row = 0; row < num_rows; row++){
+        // Iterate over each col
+        for (col = 0; col < num_cols; col++){
             // Get pixel location
-            int offset = y * cols + x;
+            int offset = row * num_cols + col;
             // Set corresponding output pixel values to equal each corresponding input arrays value
             orgba[offset] = make_uchar4(r[offset],g[offset],b[offset],255);
         }
