@@ -81,7 +81,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             int blur_sum = 0;
             int filter_pos = 0;
             int blur_pixel_count = 0;
-            int filter_sum = 0;
+            float filter_sum = 0;
 
             // Iterate from the furthest back row to the furthest forward row
             for (in_row = row - blur_offset; in_row <= row + blur_offset; in_row++){
@@ -111,6 +111,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             int result_offset = row * num_cols + col;
             out[result_offset] = (unsigned char)blur_result;
 
+            std::cout << "Blur Sum: " << blur_sum << std::endl;
             std::cout << "Filter Sum: " << filter_sum << std::endl;
         }
     }
