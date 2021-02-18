@@ -110,10 +110,10 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             // Store results in the correct location of the output array
             int result_offset = row * num_cols + col;
             out[result_offset] = (unsigned char)blur_result;
+
+            std::cout << "Filter Sum: " << filter_sum << std::endl;
         }
     }
-
-    std::cout << "Filter Sum: " << filter_sum << std::endl;
 }
 
 void serialSeparateChannels(uchar4 *imrgba, unsigned char *r, unsigned char *g, unsigned char *b, const int rows, const int cols){
