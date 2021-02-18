@@ -140,7 +140,7 @@ void serialRecombineChannels(unsigned char *r, unsigned char *g, unsigned char *
             // Get pixel location
             int offset = row * num_cols + col;
             // Set corresponding output pixel values to equal each corresponding input arrays value
-            orgba[offset] = make_uchar4(r[offset],g[offset],b[offset],255);
+            orgba[offset] = make_uchar4(b[offset],g[offset],r[offset],255);
         }
     }
 }
