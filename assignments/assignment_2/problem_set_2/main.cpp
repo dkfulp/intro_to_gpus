@@ -98,7 +98,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
                         blur_pixel_count++;
                     }
 
-                    filter_sum += filter[filter_pos]
+                    filter_sum += filter[filter_pos];
                     // Always increment filter location
                     filter_pos++;
                 }
