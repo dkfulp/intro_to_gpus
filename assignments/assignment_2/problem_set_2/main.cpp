@@ -80,7 +80,6 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             // Setup current loop variables
             int blur_sum = 0;
             int filter_pos = 0;
-            //int blur_pixel_count = 0;
 
             // Iterate from the furthest back row to the furthest forward row
             for (in_row = row - blur_offset; in_row <= row + blur_offset; in_row++){
@@ -93,16 +92,11 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
 
                         // Multiply current filter location by target pixel and add to sum
                         blur_sum += (int)( (float)in[pixel_offset] * filter[filter_pos] );
-                        // Increment number of pixels used in blur average
-                        //blur_pixel_count++;
                     }
                     // Always increment filter location
                     filter_pos++;
                 }
             }
-
-            // Divide current sum by the number of elements in the filter
-            //int blur_result = (int)( (float)blur_sum / (float)blur_pixel_count );
 
             // Store results in the correct location of the output array
             int result_offset = row * num_cols + col;
@@ -221,7 +215,6 @@ int main(int argc, char const *argv[]){
     
 
     // GPU Stage
-    /**
     // Allocate all nessecary device memory
     checkCudaErrors(cudaMalloc((void **)&d_in_img, sizeof(uchar4) * numPixels));
     checkCudaErrors(cudaMalloc((void **)&d_o_img, sizeof(uchar4) * numPixels));
@@ -243,8 +236,6 @@ int main(int argc, char const *argv[]){
 
     // Copy the output image from device to host
     checkCudaErrors(cudaMemcpy(h_o_img, d_o_img, sizeof(uchar4) * numPixels, cudaMemcpyDeviceToHost));
-    **/
-
 
 
     // Serial Stage
@@ -279,33 +270,33 @@ int main(int argc, char const *argv[]){
 
     // Output Stage 
     // Create output image using GPU Results
-    //cv::Mat output(img.rows, img.cols, CV_8UC4, (void *)h_o_img); // generate GPU output image.
-    //bool suc = cv::imwrite(outfile.c_str(), output);
-    //if (!suc){
-    //    std::cerr << "Couldn't write GPU image!\n";
-    //    exit(1);
-    //}
+    cv::Mat output(img.rows, img.cols, CV_8UC4, (void *)h_o_img); // generate GPU output image.
+    bool suc = cv::imwrite(outfile.c_str(), output);
+    if (!suc){
+        std::cerr << "Couldn't write GPU image!\n";
+        exit(1);
+    }
     // Create output image using Serial Results
     cv::Mat output_s(img.rows, img.cols, CV_8UC4, (void *)r_o_img); // generate serial output image.
-    bool suc = cv::imwrite(reference.c_str(), output_s);
+    suc = cv::imwrite(reference.c_str(), output_s);
     if (!suc){
         std::cerr << "Couldn't write serial image!\n";
         exit(1);
     }
 
     // Compare results to ensure accuracy
-    //checkResult(reference, outfile, 1e-5);
+    checkResult(reference, outfile, 1e-5);
 
     // Free Allocated Memory
-    //cudaFree(d_in_img);
-    //cudaFree(d_o_img);
-    //cudaFree(d_red);
-    //cudaFree(d_green);
-    //cudaFree(d_blue);
-    //cudaFree(d_red_blurred);
-    //cudaFree(d_green_blurred);
-    //cudaFree(d_blue_blurred);
-    //cudaFree(d_filter);
+    cudaFree(d_in_img);
+    cudaFree(d_o_img);
+    cudaFree(d_red);
+    cudaFree(d_green);
+    cudaFree(d_blue);
+    cudaFree(d_red_blurred);
+    cudaFree(d_green_blurred);
+    cudaFree(d_blue_blurred);
+    cudaFree(d_filter);
     delete[] h_red;
     delete[] h_green;
     delete[] h_blue;

@@ -24,7 +24,6 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                 // Setup loop variables
                 int blur_sum = 0;
                 int filter_pos = 0;
-                int blur_pixel_count = 0;
 
                 // Iterate from the furthest back row to the furthest forward row
                 for (in_row = gl_row - blur_offset; in_row <= gl_row + blur_offset; in_row++){
@@ -37,20 +36,14 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
 
                                         // Multiply current filter location by target pixel and add to running sum
                                         blur_sum += (int)( (float)d_in[pixel_offset] * d_filter[filter_pos] );
-                                        // Increment number of pixels used in blur average
-                                        blur_pixel_count++;
                                 }
                                 // Always increment filter location
                                 filter_pos++;
                         }
                 }
-
-                // Divide current sum by the number of elements in the filter
-                int blur_result = (int)( (float)blur_sum / (float)blur_pixel_count );
-
                 // Store results in the correct location of the output array
                 int result_offset = gl_row * num_cols + gl_col;
-                d_out[result_offset] = (unsigned char)blur_result;
+                d_out[result_offset] = (unsigned char)blur_sum;
         }
 } 
 
@@ -105,7 +98,7 @@ void recombineChannels(unsigned char *d_r, unsigned char *d_g, unsigned char *d_
                 // Get pixel location
                 int pixel_offset = gl_row * num_cols + gl_col;
                 // Create uchar4 using three arrays
-                d_orgba[pixel_offset] = make_uchar4(d_r[pixel_offset],d_g[pixel_offset],d_b[pixel_offset],255);
+                d_orgba[pixel_offset] = make_uchar4(d_b[pixel_offset],d_g[pixel_offset],d_r[pixel_offset],255);
         }
 } 
 
