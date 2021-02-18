@@ -212,7 +212,7 @@ int main(int argc, char const *argv[]){
 
     printArray<float>(h_filter, 81); // printUtility.
 
-    
+
 
     // GPU Stage
     // Allocate all nessecary device memory
@@ -231,7 +231,7 @@ int main(int argc, char const *argv[]){
     checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * fWidth * fWidth, cudaMemcpyHostToDevice));
 
     // Launch Kernel Code
-    your_gauss_blur(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue,
+    gaussianBlurKernel(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue,
                     d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
 
     // Copy the output image from device to host
