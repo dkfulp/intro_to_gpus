@@ -98,7 +98,7 @@ void recombineChannels(unsigned char *d_r, unsigned char *d_g, unsigned char *d_
                 // Get pixel location
                 int pixel_offset = gl_row * num_cols + gl_col;
                 // Create uchar4 using three arrays
-                d_orgba[pixel_offset] = make_uchar4(d_r[pixel_offset],d_g[pixel_offset],d_b[pixel_offset],255);
+                d_orgba[pixel_offset] = make_uchar4(d_b[pixel_offset],d_g[pixel_offset],d_r[pixel_offset],255);
         }
 } 
 
