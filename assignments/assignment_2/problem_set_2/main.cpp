@@ -155,7 +155,7 @@ int main(int argc, char const *argv[]){
     float *h_filter, *d_filter;
     
     // Matrices to hold input and output images
-    cv::Mat imrgba, o_img;
+    cv::Mat imrgba, o_img, ro_img;
 
     // Gaussian Blur Parameters
     const int fWidth = 9;
@@ -199,12 +199,16 @@ int main(int argc, char const *argv[]){
     }
     cv::cvtColor(img, imrgba, cv::COLOR_BGR2RGBA);
     o_img.create(img.rows, img.cols, CV_8UC4);
+    ro_img.create(img.rows, img.cols, CV_8UC4);
     const size_t numPixels = img.rows * img.cols;
 
     // Create pointers to uchar4 arrays 
-    h_in_img = (uchar4 *)imrgba.ptr<unsigned char>(0); // pointer to input image
-    h_o_img = (uchar4 *)imrgba.ptr<unsigned char>(0);  // pointer to output image
-    r_o_img = (uchar4 *)imrgba.ptr<unsigned char>(0);  // pointer to reference output image
+    //h_in_img = (uchar4 *)imrgba.ptr<unsigned char>(0); // pointer to input image 
+    h_in_img = imrgba.ptr<uchar4>(0);
+    //h_o_img = (uchar4 *)imrgba.ptr<unsigned char>(0);  // pointer to output image
+    h_o_img = (uchar4 *)o_img.ptr<unsigned char>(0);
+    //r_o_img = (uchar4 *)imrgba.ptr<unsigned char>(0);  // pointer to reference output image
+    r_o_img = (uchar4 *)ro_img.ptr<unsigned char>(0);
 
     // Allocate and Create the Gaussian filter we plan to use
     h_filter = new float[fWidth * fWidth];
