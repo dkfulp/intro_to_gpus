@@ -2,7 +2,8 @@
 
 #define BLOCK 32
 #define FILTER_WIDTH 9
-#define SHARED_MEM_SIZE BLOCK + FILTER_WIDTH - 1
+// Shared Memory = BLOCK + FILTER_WIDTH - 1
+#define SHARED_MEM_SIZE 40
 
 
 // gaussianBlurGlobal:
@@ -139,7 +140,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
         int blur_offset = ((filterWidth-1)/2);
         
         // Create shared memory input array
-        __shared__ unsigned char input_pixels[SHARED_MEM_SIZE*SHARED_MEM_SIZE];
+        __shared__ unsigned char input_pixels[SHARED_MEM_SIZE * SHARED_MEM_SIZE];
 
         // Get location of pixel in global memory
         int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
