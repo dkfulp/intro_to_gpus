@@ -1,6 +1,8 @@
 #include "./gaussian_kernel.h" 
 
 #define BLOCK 32
+#define FILTER_WIDTH 9
+#define SHARED_MEM_SIZE BLOCK + ((FILTER_WIDTH-1)/2)*2
 
 
 // gaussianBlurGlobal:
@@ -124,10 +126,13 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
 
 
 
-// gaussianBlurShared:
+// gaussianBlurShared2:
 // Kernel that computes a gaussian blur over a single RGB channel. 
 // This implementation in specific uses shared memory to reduce the 
 // number of accesses to global memory to improve performance.
+// 
+// *** Note: To use this approach, the block size and filter width 
+// must be known before hand and set at the top of the document.
 __global__ 
 void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
         // Given the filter width, determine the correct size of shared memory
@@ -135,7 +140,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
         int shared_memory_size = BLOCK + (blur_offset * 2);
 
         // Create shared memory input array
-        __shared__ unsigned char input_pixels[shared_memory_size*shared_memory_size];
+        __shared__ unsigned char input_pixels[SHARED_MEM_SIZE*SHARED_MEM_SIZE];
 
         // Get location of pixel in global memory
         int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -154,7 +159,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
         if (gl_col < num_cols && gl_row < num_rows){
                 // Each pixel loads in its own data from global memory
                 int global_offset = gl_row * num_cols + gl_col;
-                int shared_offset = off_sh_row * shared_memory_size + off_sh_col;
+                int shared_offset = off_sh_row * SHARED_MEM_SIZE + off_sh_col;
                 input_pixels[shared_offset] = d_in[global_offset];
 
                 // Top Row Edge Pixels
@@ -167,7 +172,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                 if (cur_gl_row >= 0){
                                         // If valid, save pixel to shared memory
                                         global_offset = cur_gl_row * num_cols + gl_col;
-                                        shared_offset = cur_sh_row * shared_memory_size + off_sh_col;
+                                        shared_offset = cur_sh_row * SHARED_MEM_SIZE + off_sh_col;
                                         input_pixels[shared_offset] = d_in[global_offset]; 
                                 }
                         }
@@ -183,7 +188,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                 if (cur_gl_row < num_rows){
                                         // If valid, save pixel to shared memory
                                         global_offset = cur_gl_row * num_cols + gl_col;
-                                        shared_offset = cur_sh_row * shared_memory_size + off_sh_col;
+                                        shared_offset = cur_sh_row * SHARED_MEM_SIZE + off_sh_col;
                                         input_pixels[shared_offset] = d_in[global_offset]; 
                                 }
                         }
@@ -199,7 +204,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                 if (cur_gl_col >= 0){
                                         // If valid, save pixel to shared memory
                                         global_offset = gl_row * num_cols + cur_gl_col;
-                                        shared_offset = off_sh_row * shared_memory_size + cur_sh_col;
+                                        shared_offset = off_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                         input_pixels[shared_offset] = d_in[global_offset];
                                 }
                         } 
@@ -215,7 +220,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                 if (cur_gl_col < num_cols){
                                         // If valid, save pixel to shared memory
                                         global_offset = gl_row * num_cols + cur_gl_col;
-                                        shared_offset = off_sh_row * shared_memory_size + cur_sh_col;
+                                        shared_offset = off_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                         input_pixels[shared_offset] = d_in[global_offset];
                                 }
                         }
@@ -234,7 +239,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                         if (cur_gl_row >= 0 && cur_gl_col >= 0){
                                                 // If valid, save pixel to shared memory
                                                 global_offset = cur_gl_row * num_cols + cur_gl_col;
-                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                shared_offset = cur_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                                 input_pixels[shared_offset] = d_in[global_offset]; 
                                         }
 
@@ -255,7 +260,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                         if (cur_gl_row >= 0 && cur_gl_col < num_cols){
                                                 // If valid, save pixel to shared memory
                                                 global_offset = cur_gl_row * num_cols + cur_gl_col;
-                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                shared_offset = cur_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                                 input_pixels[shared_offset] = d_in[global_offset]; 
                                         }
                                 }   
@@ -275,7 +280,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                         if (cur_gl_row < num_rows && cur_gl_col >= 0){
                                                 // If valid, save pixel to shared memory
                                                 global_offset = cur_gl_row * num_cols + cur_gl_col;
-                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                shared_offset = cur_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                                 input_pixels[shared_offset] = d_in[global_offset]; 
                                         }
                                 }   
@@ -295,7 +300,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                         if (cur_gl_row < num_rows && cur_gl_col < num_cols){
                                                 // If valid, save pixel to shared memory
                                                 global_offset = cur_gl_row * num_cols + cur_gl_col;
-                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                shared_offset = cur_sh_row * SHARED_MEM_SIZE + cur_sh_col;
                                                 input_pixels[shared_offset] = d_in[global_offset]; 
                                         }
                                 }   
@@ -325,7 +330,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                                 // Ensure target blur pixel location is valid
                                 if (in_gl_row < num_rows && in_gl_col < num_cols && in_gl_row >= 0 && in_gl_col >= 0){
                                         // Get target blur pixel from shared memory
-                                        shared_offset = in_sh_row * shared_memory_size + in_sh_col;
+                                        shared_offset = in_sh_row * SHARED_MEM_SIZE + in_sh_col;
 
                                         // Multiply current filter location by target pixel and add to running sum
                                         blur_sum += (int)( (float)input_pixels[shared_offset] * d_filter[filter_pos] );
