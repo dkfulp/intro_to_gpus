@@ -121,6 +121,229 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                 d_out[result_offset] = (unsigned char)blur_sum;
         } 
 } 
+
+
+
+// gaussianBlurShared:
+// Kernel that computes a gaussian blur over a single RGB channel. 
+// This implementation in specific uses shared memory to reduce the 
+// number of accesses to global memory to improve performance.
+__global__ 
+void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
+        // Given the filter width, determine the correct size of shared memory
+        int blur_offset = ((filterWidth-1)/2);
+        int shared_memory_size = BLOCK + (blur_offset * 2);
+
+        // Create shared memory input array
+        __shared__ unsigned char input_pixels[shared_memory_size*shared_memory_size];
+
+        // Get location of pixel in global memory
+        int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
+        int gl_col = blockIdx.x * blockDim.x + threadIdx.x;
+
+        // Get location of pixel in true block data
+        int tr_sh_row = threadIdx.y;
+        int tr_sh_col = threadIdx.x;
+
+        // Get location of pixel in shared memory 
+        int off_sh_row = tr_sh_row + blur_offset;
+        int off_sh_col = tr_sh_col + blur_offset;
+
+        // Load shared memory with edge pixels loading extra pixels
+        // Ensure working pixel is valid
+        if (gl_col < num_cols && gl_row < num_rows){
+                // Each pixel loads in its own data from global memory
+                int global_offset = gl_row * num_cols + gl_col;
+                int shared_offset = off_sh_row * shared_memory_size + off_sh_col;
+                input_pixels[shared_offset] = d_in[global_offset];
+
+                // Top Row Edge Pixels
+                if (tr_sh_row == 0){
+                        // Load in pixels above equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                int cur_gl_row = gl_row - i;
+                                int cur_sh_row = off_sh_row - i;
+                                // Ensure target global pixel is valid
+                                if (cur_gl_row >= 0){
+                                        // If valid, save pixel to shared memory
+                                        global_offset = cur_gl_row * num_cols + gl_col;
+                                        shared_offset = cur_sh_row * shared_memory_size + off_sh_col;
+                                        input_pixels[shared_offset] = d_in[global_offset]; 
+                                }
+                        }
+                } 
+
+                // Bottom Row Edge Pixels   
+                if (tr_sh_row == blockDim.y-1){
+                        // Load in pixels above equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                int cur_gl_row = gl_row + i;
+                                int cur_sh_row = off_sh_row + i;
+                                // Ensure target global pixel is valid
+                                if (cur_gl_row < num_rows){
+                                        // If valid, save pixel to shared memory
+                                        global_offset = cur_gl_row * num_cols + gl_col;
+                                        shared_offset = cur_sh_row * shared_memory_size + off_sh_col;
+                                        input_pixels[shared_offset] = d_in[global_offset]; 
+                                }
+                        }
+                }
+
+                // Left Column Edge Pixels   
+                if (tr_sh_col == 0){
+                        // Load in pixels above equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                int cur_gl_col = gl_col - i;
+                                int cur_sh_col = off_sh_col - i;
+                                // Ensure target global pixel is valid
+                                if (cur_gl_col >= 0){
+                                        // If valid, save pixel to shared memory
+                                        global_offset = gl_row * num_cols + cur_gl_col;
+                                        shared_offset = off_sh_row * shared_memory_size + cur_sh_col;
+                                        input_pixels[shared_offset] = d_in[global_offset];
+                                }
+                        } 
+                } 
+
+                // Right Column Edge Pixels  
+                if (tr_sh_col == blockDim.x-1){
+                        // Load in pixels above equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                int cur_gl_col = gl_col + i;
+                                int cur_sh_col = off_sh_col + i;
+                                // Ensure target global pixel is valid
+                                if (cur_gl_col < num_cols){
+                                        // If valid, save pixel to shared memory
+                                        global_offset = gl_row * num_cols + cur_gl_col;
+                                        shared_offset = off_sh_row * shared_memory_size + cur_sh_col;
+                                        input_pixels[shared_offset] = d_in[global_offset];
+                                }
+                        }
+                }
+
+                // Upper Left Corner Pixel
+                if (tr_sh_row == 0 && tr_sh_col == 0){
+                        // Load in pixels diagonal equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                for (int j = 1; j <= blur_offset; j++){
+                                        int cur_gl_row = gl_row - i;
+                                        int cur_gl_col = gl_col - j;
+                                        int cur_sh_row = off_sh_row - i;
+                                        int cur_sh_col = off_sh_col - j;
+                                        // Ensure target global pixel is valid
+                                        if (cur_gl_row >= 0 && cur_gl_col >= 0){
+                                                // If valid, save pixel to shared memory
+                                                global_offset = cur_gl_row * num_cols + cur_gl_col;
+                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                input_pixels[shared_offset] = d_in[global_offset]; 
+                                        }
+
+                                }   
+                        }
+                }
+
+                // Upper Right Corner Pixel
+                if (tr_sh_row == 0 && tr_sh_col == blockDim.x-1){
+                        // Load in pixels diagonal equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                for (int j = 1; j <= blur_offset; j++){
+                                        int cur_gl_row = gl_row - i;
+                                        int cur_gl_col = gl_col + j;
+                                        int cur_sh_row = off_sh_row - i;
+                                        int cur_sh_col = off_sh_col + j;
+                                        // Ensure target global pixel is valid
+                                        if (cur_gl_row >= 0 && cur_gl_col < num_cols){
+                                                // If valid, save pixel to shared memory
+                                                global_offset = cur_gl_row * num_cols + cur_gl_col;
+                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                input_pixels[shared_offset] = d_in[global_offset]; 
+                                        }
+                                }   
+                        }
+                }
+
+                // Lower Left Corner Pixel
+                if (tr_sh_row == blockDim.y-1 && tr_sh_col == 0){
+                        // Load in pixels diagonal equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                for (int j = 1; j <= blur_offset; j++){
+                                        int cur_gl_row = gl_row + i;
+                                        int cur_gl_col = gl_col - j;
+                                        int cur_sh_row = off_sh_row + i;
+                                        int cur_sh_col = off_sh_col - j;
+                                        // Ensure target global pixel is valid
+                                        if (cur_gl_row < num_rows && cur_gl_col >= 0){
+                                                // If valid, save pixel to shared memory
+                                                global_offset = cur_gl_row * num_cols + cur_gl_col;
+                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                input_pixels[shared_offset] = d_in[global_offset]; 
+                                        }
+                                }   
+                        }
+                }
+
+                // Lower Right Corner Pixel
+                if (tr_sh_row == blockDim.y-1 && tr_sh_col == blockDim.x-1){
+                        // Load in pixels diagonal equal to blur_offset
+                        for (int i = 1; i <= blur_offset; i++){
+                                for (int j = 1; j <= blur_offset; j++){
+                                        int cur_gl_row = gl_row + i;
+                                        int cur_gl_col = gl_col + j;
+                                        int cur_sh_row = off_sh_row + i;
+                                        int cur_sh_col = off_sh_col + j;
+                                        // Ensure target global pixel is valid
+                                        if (cur_gl_row < num_rows && cur_gl_col < num_cols){
+                                                // If valid, save pixel to shared memory
+                                                global_offset = cur_gl_row * num_cols + cur_gl_col;
+                                                shared_offset = cur_sh_row * shared_memory_size + cur_sh_col;
+                                                input_pixels[shared_offset] = d_in[global_offset]; 
+                                        }
+                                }   
+                        }
+                }
+
+                // Make sure all threads have loaded before starting computation
+                __syncthreads();
+
+                // Begin Calculations by Setting up Loop Variables
+                int row_offset, col_offset;
+                int in_sh_row, in_sh_col;
+                int in_gl_row, in_gl_col;
+                int blur_sum = 0;
+                int filter_pos = 0;
+              
+                // Iterate from the furthest back offset shared row to the furthest forward offset shared row
+                for (row_offset = - blur_offset; row_offset <= blur_offset; row_offset++){
+                        // Iterate from the furthest back offset shared col to the furthest forward offset shared col
+                        for (col_offset = - blur_offset; col_offset <= blur_offset; col_offset++){
+                                // Calculate global and shared offsets
+                                in_sh_row = off_sh_row + row_offset;
+                                in_sh_col = off_sh_col + col_offset;
+                                in_gl_row = gl_row + row_offset;
+                                in_gl_col = gl_col + col_offset;
+
+                                // Ensure target blur pixel location is valid
+                                if (in_gl_row < num_rows && in_gl_col < num_cols && in_gl_row >= 0 && in_gl_col >= 0){
+                                        // Get target blur pixel from shared memory
+                                        shared_offset = in_sh_row * shared_memory_size + in_sh_col;
+
+                                        // Multiply current filter location by target pixel and add to running sum
+                                        blur_sum += (int)( (float)input_pixels[shared_offset] * d_filter[filter_pos] );
+
+                                }
+                                // Always increment filter location
+                                filter_pos++;
+                        }
+                }
+
+                // Make sure all threads have finished computation
+                __syncthreads();
+
+                // Store results in the correct location of the output array
+                int result_offset = gl_row * num_cols + gl_col;
+                d_out[result_offset] = (unsigned char)blur_sum;
+        }
+}
  
 
 
@@ -182,19 +405,22 @@ void gaussianBlurKernel(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, si
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the red pixel array
-        gaussianBlurShared<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurShared2<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurShared<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the green pixel array
-        gaussianBlurShared<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurShared2<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurShared<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the blue pixel array
-        gaussianBlurShared<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurShared2<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurShared<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
