@@ -2,7 +2,7 @@
 
 #define BLOCK 32
 #define FILTER_WIDTH 9
-#define SHARED_MEM_SIZE BLOCK + ((FILTER_WIDTH-1)/2)*2
+#define SHARED_MEM_SIZE BLOCK + FILTER_WIDTH - 1
 
 
 // gaussianBlurGlobal:
