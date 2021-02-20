@@ -51,12 +51,12 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
 } 
 
 
-// gaussianBlurShared:
+// gaussianBlurSharedv1:
 // Kernel that computes a gaussian blur over a single RGB channel. 
 // This implementation in specific uses shared memory to reduce the 
 // number of accesses to global memory to improve performance.
  __global__ 
- void gaussianBlurShared(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
+ void gaussianBlurSharedv1(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
         // Create shared memory input and array
         __shared__ unsigned char input_pixels[BLOCK*BLOCK];
 
@@ -127,7 +127,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
 
 
 
-// gaussianBlurShared2:
+// gaussianBlurSharedv2:
 // Kernel that computes a gaussian blur over a single RGB channel. 
 // This implementation in specific uses shared memory to reduce the 
 // number of accesses to global memory to improve performance.
@@ -135,9 +135,9 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
 // *** Note: To use this approach, the block size and filter width 
 // must be known before hand and set at the top of the document.
 __global__ 
-void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
+void gaussianBlurSharedv2(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter){
         // Given the filter width, determine the correct size of shared memory
-        int blur_offset = ((filterWidth-1)/2);
+        int blur_offset = ((FILTER_WIDTH-1)/2);
         
         // Create shared memory input array
         __shared__ unsigned char input_pixels[SHARED_MEM_SIZE * SHARED_MEM_SIZE];
@@ -410,22 +410,22 @@ void gaussianBlurKernel(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, si
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the red pixel array
-        gaussianBlurShared2<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurShared<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter);
+        gaussianBlurSharedv1<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the green pixel array
-        gaussianBlurShared2<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurShared<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter);
+        gaussianBlurSharedv1<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the blue pixel array
-        gaussianBlurShared2<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurShared<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter);
+        gaussianBlurSharedv1<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         //gaussianBlurGlobal<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
