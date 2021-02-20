@@ -137,8 +137,7 @@ __global__
 void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
         // Given the filter width, determine the correct size of shared memory
         int blur_offset = ((filterWidth-1)/2);
-        int shared_memory_size = BLOCK + (blur_offset * 2);
-
+        
         // Create shared memory input array
         __shared__ unsigned char input_pixels[SHARED_MEM_SIZE*SHARED_MEM_SIZE];
 
@@ -310,6 +309,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                 // Make sure all threads have loaded before starting computation
                 __syncthreads();
 
+                /**
                 // Begin Calculations by Setting up Loop Variables
                 int row_offset, col_offset;
                 int in_sh_row, in_sh_col;
@@ -347,6 +347,7 @@ void gaussianBlurShared2(unsigned char *d_in, unsigned char *d_out, const int nu
                 // Store results in the correct location of the output array
                 int result_offset = gl_row * num_cols + gl_col;
                 d_out[result_offset] = (unsigned char)blur_sum;
+                **/
         }
 }
  
