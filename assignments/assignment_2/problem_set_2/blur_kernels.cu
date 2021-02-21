@@ -410,23 +410,23 @@ void gaussianBlurKernel(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, si
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the red pixel array
-        gaussianBlurSharedv2<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter);
         //gaussianBlurSharedv1<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurGlobal<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the green pixel array
-        gaussianBlurSharedv2<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter);
         //gaussianBlurSharedv1<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurGlobal<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the blue pixel array
-        gaussianBlurSharedv2<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter);
+        //gaussianBlurSharedv2<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter);
         //gaussianBlurSharedv1<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
-        //gaussianBlurGlobal<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurGlobal<<<grid, block>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
