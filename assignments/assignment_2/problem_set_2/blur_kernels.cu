@@ -417,8 +417,10 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
                         int result_row = gl_row + (blur_offset - filter_row);
 
                         // Store the sum in the correct location of the global results using an atomic Add
-                        int result_offset = result_row * num_cols + pixel_col;
-                        atomicAdd(d_out + (result_offset), blur_sum);
+                        if (result_row < num_rows){
+                                int result_offset = result_row * num_cols + pixel_col;
+                                atomicAdd(d_out + (result_offset), blur_sum);
+                        }       
                 }
         }
 } 
