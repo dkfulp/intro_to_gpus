@@ -377,64 +377,57 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
         // Determine the target pixel for each thread by col offset
         int col_offset = thread_id * pixels_per_thread;
 
-        // Load shared memory
-        for (int i = 0; i < pixels_per_thread; i++){
-                int pixel_col = col_offset + i;
+        // Ensure starting pixel location is valid 
+        if (col_offset < num_cols){
+                // Load shared memory
+                for (int i = 0; i < pixels_per_thread; i++){
+                        int pixel_col = col_offset + i;
 
-                if (pixel_col < num_cols){
-                        int global_offset = gl_row * num_cols + pixel_col;
-                        input_pixel_row[pixel_col] = d_in[global_offset];
+                        if (pixel_col < num_cols){
+                                int global_offset = gl_row * num_cols + pixel_col;
+                                input_pixel_row[pixel_col] = d_in[global_offset];
+                        }
                 }
         }
 
         // Make sure all threads have loaded before starting computation
         __syncthreads();
 
-        // Temporarily 
-        for (int i = 0; i < pixels_per_thread; i++){
-                int pixel_col = col_offset + i;
+        // Ensure starting pixel location is valid 
+        if (col_offset < num_cols){
+                // Using shared memory, work over pixels per thread
+                for (int i = 0; i < pixels_per_thread; i++){
+                        // Determine target pixels location
+                        int pixel_col = col_offset + i;
 
-                if (pixel_col < num_cols){
-                        int global_offset = gl_row * num_cols + pixel_col;
-                        d_out[global_offset] = input_pixel_row[pixel_col];
-                }
-        }
+                        // Setup loop variables
+                        int in_col;
+                        float blur_sum = 0;
+                        int filter_pos = filter_row * filterWidth;
 
-        /**
-        // Setup loop variables
-        float blur_sum = 0;
-        int in_col;
-
-        // Using shared memory, work over pixels per thread
-        for (int i = 0; i < pixels_per_thread; i++){
-                // Determine target pixels index
-                int pixel_col = col_offset + i;
-                // Reset filter position
-                int filter_pos = filter_row * filterWidth;
-
-                if (pixel_col < num_cols){
-                        // Iterate from the furthest back col to the furthest forward col around target pixel
-                        for (in_col = pixel_col - blur_offset; in_col <= pixel_col + blur_offset; in_col++){
-                                // Ensure target blur pixel location is valid
-                                if (in_col >= 0 && in_col < num_cols){
-                                        // Multiply current filter location by target pixel and add to running sum
-                                        blur_sum += (float)input_pixel_row[in_col] * d_filter[filter_pos];
+                        if (pixel_col < num_cols){
+                                // Iterate from the furthest back col to the furthest forward col around target pixel
+                                for (in_col = pixel_col - blur_offset; in_col <= pixel_col + blur_offset; in_col++){
+                                        // Ensure target blur pixel location is valid
+                                        if (in_col >= 0 && in_col < num_cols){
+                                                // Multiply current filter location by target pixel and add to running sum
+                                                blur_sum += (float)input_pixel_row[in_col] * d_filter[filter_pos];
+                                        }
+                                        // Always increment filter location
+                                        filter_pos++;
                                 }
-                                // Always increment filter location
-                                filter_pos++;
+
+                                // Given the current working row, filter row, and blur_offset determine the correct result location
+                                int result_row = gl_row + (blur_offset - filter_row);
+
+                                // Store the sum in the correct location of the global results using an atomic Add
+                                if (result_row >= 0 && result_row < num_rows){
+                                        int result_offset = result_row * num_cols + pixel_col;
+                                        atomicAdd(d_out + (result_offset), blur_sum);
+                                }       
                         }
-
-                        // Given the current working row, filter row, and blur_offset determine the correct result location
-                        int result_row = gl_row + (blur_offset - filter_row);
-
-                        // Store the sum in the correct location of the global results using an atomic Add
-                        if (result_row < num_rows){
-                                int result_offset = result_row * num_cols + pixel_col;
-                                atomicAdd(d_out + (result_offset), blur_sum);
-                        }       
                 }
         }
-        **/
 } 
 
 __global__ 
