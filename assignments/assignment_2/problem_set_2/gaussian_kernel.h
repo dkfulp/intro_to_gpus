@@ -29,3 +29,8 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
         unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
         float *d_filter,  int filterWidth, float *tmp_pixels);
+
+void gaussianBlurKernelSharedSepCol(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+        float *d_filter,  int filterWidth, float *tmp_pixels);

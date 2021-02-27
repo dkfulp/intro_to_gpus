@@ -430,8 +430,90 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
         }
 } 
 
+
+
+// gaussianBlurSepCol:
+// Kernel that computes a gaussian blur over a single RGB channel 
+// but does this process uses shared memory and splits computations
+// by each column of the image and Filter.
 __global__ 
-void gaussianBlurSepRowCombiner(float *d_in, unsigned char *d_out, const int num_rows, const int num_cols){
+void gaussianBlurSepCol(unsigned char *d_in, float *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
+        // Create shared memory to hold the full col of values
+        extern __shared__ unsigned char input_pixel_col[];
+
+        // Given the filter width, determine the correct col offsets
+        int blur_offset = ((filterWidth-1)/2);
+        
+        // Determine the col this block is working on
+        int gl_col = blockIdx.x;
+        // Determine the filter col this block is working on
+        int filter_col = blockIdx.y;
+        // Determine thread id
+        int thread_id = threadIdx.x;
+        // Determine the number of threads working in each block
+        int total_threads = blockDim.x;
+
+        // Determine how many pixels of this col each thread should do
+        int pixels_per_thread = std::ceil((float)num_rows/(float)total_threads);
+
+        // Determine the target pixel for each thread by row offset
+        int row_offset = thread_id * pixels_per_thread;
+
+        // Ensure starting pixel location is valid 
+        if (row_offset < num_rows){
+                // Load shared memory
+                for (int i = 0; i < pixels_per_thread; i++){
+                        int pixel_row = row_offset + i;
+
+                        if (pixel_row < num_rows){
+                                int global_offset = pixel_row * num_cols + gl_col;
+                                input_pixel_col[pixel_col] = d_in[global_offset];
+                        }
+                }
+        }
+
+        // Make sure all threads have loaded before starting computation
+        __syncthreads();
+
+        // Ensure starting pixel location is valid 
+        if (row_offset < num_rows){
+                // Using shared memory, work over pixels per thread
+                for (int i = 0; i < pixels_per_thread; i++){
+                        // Determine target pixels location
+                        int pixel_row = row_offset + i;
+
+                        // Setup loop variables
+                        int in_row;
+                        float blur_sum = 0;
+                        int filter_pos = filter_col;
+
+                        if (pixel_row < num_rows){
+                                // Iterate from the furthest back row to the furthest forward row around target pixel
+                                for (in_row = pixel_row - blur_offset; in_row <= pixel_row + blur_offset; in_row++){
+                                        // Ensure target blur pixel location is valid
+                                        if (in_row >= 0 && in_row < num_rows){
+                                                // Multiply current filter location by target pixel and add to running sum
+                                                blur_sum += (float)input_pixel_col[in_row] * d_filter[filter_pos];
+                                        }
+                                        // Always increment filter location
+                                        filter_pos = filter_pos + filterWidth;
+                                }
+
+                                // Given the current working col, filter col, and blur_offset determine the correct result location
+                                int result_col = gl_col + (blur_offset - filter_col);
+
+                                // Store the sum in the correct location of the global results using an atomic Add
+                                if (result_col >= 0 && result_col < num_cols){
+                                        int result_offset = pixel_row * num_cols + result_col;
+                                        atomicAdd(d_out + (result_offset), blur_sum);
+                                }       
+                        }
+                }
+        }
+} 
+
+__global__ 
+void gaussianBlurSepCombiner(float *d_in, unsigned char *d_out, const int num_rows, const int num_cols){
         // Determine location of target pixel in global memory
         int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
         int gl_col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -612,10 +694,6 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
 
         // Set grid and block dimensions for seperable row gaussian kernel
         dim3 gridSep(num_rows,filterWidth,1);
-        //size_t block_size = BLOCK*BLOCK;
-        //if (num_cols < block_size){
-        //        block_size = num_cols;
-        //} 
         dim3 blockSep(BLOCK*BLOCK, 1, 1);
 
         // Determine amount of shared memory needed to hold full rows for each kernel call 
@@ -632,7 +710,7 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert red pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_rblurred, num_rows, num_cols);
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_rblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
@@ -642,7 +720,7 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert green pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_gblurred, num_rows, num_cols);
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_gblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
@@ -652,7 +730,64 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert blue pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_bblurred, num_rows, num_cols);
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_bblurred, num_rows, num_cols);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Recombine the blurred channels into a single uchar4 array
+        recombineChannels<<<grid, block>>>(d_rblurred, d_gblurred, d_bblurred, d_oimrgba, num_rows, num_cols);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());   
+}
+
+void gaussianBlurKernelSharedSepCol(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+        float *d_filter,  int filterWidth, float *tmp_pixels){
+ 
+        // Set grid and block dimensions for seperating and recombining
+        dim3 grid(std::ceil((float)num_cols/(float)BLOCK),std::ceil((float)num_rows/(float)BLOCK),1);
+        dim3 block(BLOCK, BLOCK, 1);
+
+        // Set grid and block dimensions for seperable row gaussian kernel
+        dim3 gridSep(num_cols,filterWidth,1);
+        dim3 blockSep(BLOCK*BLOCK, 1, 1);
+
+        // Determine amount of shared memory needed to hold full rows for each kernel call 
+        size_t shared_memory_size = num_rows * sizeof(unsigned char);
+
+        // Seperate out each channel into seperate arrays
+        separateChannels<<<grid, block>>>(d_imrgba, d_red, d_green, d_blue, num_rows, num_cols);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Compute Gaussian Blur for the red pixel array
+        gaussianBlurSepCol<<<gridSep, blockSep, shared_memory_size>>>(d_red, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert red pixel results to unsigned chars and reset temp array
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_rblurred, num_rows, num_cols);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Compute Gaussian Blur for the green pixel array
+        gaussianBlurSepCol<<<gridSep, blockSep, shared_memory_size>>>(d_green, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert green pixel results to unsigned chars and reset temp array
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_gblurred, num_rows, num_cols);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Compute Gaussian Blur for the blue pixel array
+        gaussianBlurSepCol<<<gridSep, blockSep, shared_memory_size>>>(d_blue, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert blue pixel results to unsigned chars and reset temp array
+        gaussianBlurSepCombiner<<<grid, block>>>(tmp_pixels, d_bblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
