@@ -5,30 +5,6 @@
 // Shared Memory = BLOCK + FILTER_WIDTH - 1
 #define SHARED_MEM_SIZE 40
 
-
-
-// atomicAdd function
-inline __device__ void atomicAdd(unsigned char *address, unsigned char val) {
-        size_t offset = (size_t)address & 3;
-        uint32_t * address_as_ui = (uint32_t *)((char *)address - offset);
-        uint32_t old = *address_as_ui;
-        uint32_t shift = offset * 8;
-        uint32_t old_byte;
-        uint32_t newval;
-        uint32_t assumed;
-    
-        do {
-                    assumed = old;
-                    old_byte = (old >> shift) & 0xff;
-                    // preserve size in initial cast. Casting directly to uint32_t pads
-                    // negative signed values with 1's (e.g. signed -1 = unsigned ~0).
-                    newval = static_cast<uint8_t>(val + old_byte);
-                    newval = (old & ~(0x000000ff << shift)) | (newval << shift);
-                    old = atomicCAS(address_as_ui, assumed, newval);
-        } while (assumed != old);
-}
-
-
 // gaussianBlurGlobal:
 // Kernel that computes a gaussian blur over a single RGB channel. 
 // This implementation in specific does not use shared memory to 
@@ -379,7 +355,7 @@ void gaussianBlurSharedv2(unsigned char *d_in, unsigned char *d_out, const int n
 // but does this process uses shared memory and splits computations
 // by each row of the image and Filter.
 __global__ 
-void gaussianBlurSepRow(unsigned char *d_in, unsigned char *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
+void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, const int num_cols, float *d_filter, const int filterWidth){
         // Create shared memory to hold the full row of values
         extern __shared__ unsigned char input_pixel_row[];
 
@@ -441,9 +417,27 @@ void gaussianBlurSepRow(unsigned char *d_in, unsigned char *d_out, const int num
 
                 // Store the sum in the correct location of the global results using an atomic Add
                 int result_offset = result_row * num_cols + pixel_col;
-                atomicAdd(d_out + (result_offset), (unsigned char)__float2uint_rd(blur_sum));
+                atomicAdd(d_out + (result_offset), blur_sum);
         }
 } 
+
+__global__ 
+void gaussianBlurSepRowCombiner(float *d_in, unsigned char *d_out, const int num_rows, const int num_cols){
+        // Determine location of target pixel in global memory
+        int gl_row = blockIdx.y * blockDim.y + threadIdx.y;
+        int gl_col = blockIdx.x * blockDim.x + threadIdx.x;
+
+        // Ensure the target pixel is valid
+        if (gl_col < num_cols && gl_row < num_rows){
+                // Get pixel location
+                int pixel_offset = gl_row * num_cols + gl_col;
+
+                // Convert and store temp result in the correct global output
+                d_out[pixel_offset] = (unsigned char)d_in[pixel_offset];
+                // Reset value to zero
+                d_in[pixel_offset] = 0.0;
+        }
+}
  
 
 
@@ -601,7 +595,7 @@ void gaussianBlurKernelSharedv2(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_
 void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
         unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
         unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
-        float *d_filter,  int filterWidth){
+        float *d_filter,  int filterWidth, float *tmp_pixels){
  
         // Set grid and block dimensions for seperating and recombining
         dim3 grid(std::ceil((float)num_cols/(float)BLOCK),std::ceil((float)num_rows/(float)BLOCK),1);
@@ -624,17 +618,32 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the red pixel array
-        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_red, d_rblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_red, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert red pixel results to unsigned chars and reset temp array
+        gaussianBlurSepRowCombiner(tmp_pixels, d_rblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the green pixel array
-        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_green, d_gblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_green, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert green pixel results to unsigned chars and reset temp array
+        gaussianBlurSepRowCombiner(tmp_pixels, d_gblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
         // Compute Gaussian Blur for the blue pixel array
-        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_blue, d_bblurred, num_rows, num_cols, d_filter, filterWidth);
+        gaussianBlurSepRow<<<gridSep, blockSep, shared_memory_size>>>(d_blue, tmp_pixels, num_rows, num_cols, d_filter, filterWidth);
+        cudaDeviceSynchronize();
+        checkCudaErrors(cudaGetLastError());
+
+        // Convert blue pixel results to unsigned chars and reset temp array
+        gaussianBlurSepRowCombiner(tmp_pixels, d_bblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 

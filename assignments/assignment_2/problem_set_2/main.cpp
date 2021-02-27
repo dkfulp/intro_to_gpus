@@ -242,7 +242,11 @@ int main(int argc, char const *argv[]){
     // Shared V2
     //gaussianBlurKernelSharedv2(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter);
     // Shared Seperable Row
-    gaussianBlurKernelSharedSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    float *tmp_pixels;
+    checkCudaErrors(cudaMalloc((void **)&tmp_pixels, sizeof(float) * numPixels));
+    checkCudaErrors(cudaMemset(tmp_pixels, 0, sizeof(float) * numPixels));
+    gaussianBlurKernelSharedSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth, tmp_pixels);
+    cudaFree(tmp_pixels);
 
     // Copy the output image from device to host
     checkCudaErrors(cudaMemcpy(h_o_img, d_o_img, sizeof(uchar4) * numPixels, cudaMemcpyDeviceToHost));
