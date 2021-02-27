@@ -401,23 +401,25 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
                 // Reset filter position
                 int filter_pos = filter_row * filterWidth;
 
-                // Iterate from the furthest back col to the furthest forward col around target pixel
-                for (in_col = pixel_col - blur_offset; in_col <= pixel_col + blur_offset; in_col++){
-                        // Ensure target blur pixel location is valid
-                        if (in_col >= 0 && in_col < num_cols){
-                                // Multiply current filter location by target pixel and add to running sum
-                                blur_sum += (float)input_pixel_row[in_col] * d_filter[filter_pos];
+                if (pixel_col < num_cols){
+                        // Iterate from the furthest back col to the furthest forward col around target pixel
+                        for (in_col = pixel_col - blur_offset; in_col <= pixel_col + blur_offset; in_col++){
+                                // Ensure target blur pixel location is valid
+                                if (in_col >= 0 && in_col < num_cols){
+                                        // Multiply current filter location by target pixel and add to running sum
+                                        blur_sum += (float)input_pixel_row[in_col] * d_filter[filter_pos];
+                                }
+                                // Always increment filter location
+                                filter_pos++;
                         }
-                        // Always increment filter location
-                        filter_pos++;
+
+                        // Given the current working row, filter row, and blur_offset determine the correct result location
+                        int result_row = gl_row + (blur_offset - filter_row);
+
+                        // Store the sum in the correct location of the global results using an atomic Add
+                        int result_offset = result_row * num_cols + pixel_col;
+                        atomicAdd(d_out + (result_offset), blur_sum);
                 }
-
-                // Given the current working row, filter row, and blur_offset determine the correct result location
-                int result_row = gl_row + (blur_offset - filter_row);
-
-                // Store the sum in the correct location of the global results using an atomic Add
-                int result_offset = result_row * num_cols + pixel_col;
-                atomicAdd(d_out + (result_offset), blur_sum);
         }
 } 
 
@@ -603,11 +605,11 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
 
         // Set grid and block dimensions for seperable row gaussian kernel
         dim3 gridSep(num_rows,filterWidth,1);
-        size_t block_size = BLOCK*BLOCK;
-        if (num_cols < block_size){
-                block_size = num_cols;
-        } 
-        dim3 blockSep(block_size, 1, 1);
+        //size_t block_size = BLOCK*BLOCK;
+        //if (num_cols < block_size){
+        //        block_size = num_cols;
+        //} 
+        dim3 blockSep(BLOCK*BLOCK, 1, 1);
 
         // Determine amount of shared memory needed to hold full rows for each kernel call 
         size_t shared_memory_size = num_cols * sizeof(unsigned char);
