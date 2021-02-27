@@ -337,7 +337,7 @@ void gaussianBlurSharedv2(unsigned char *d_in, unsigned char *d_out, const int n
                 int row_offset, col_offset;
                 int in_sh_row, in_sh_col;
                 int in_gl_row, in_gl_col;
-                int blur_sum = 0;
+                float blur_sum = 0;
                 int filter_pos = 0;
               
                 // Iterate from the furthest back offset shared row to the furthest forward offset shared row
@@ -356,7 +356,7 @@ void gaussianBlurSharedv2(unsigned char *d_in, unsigned char *d_out, const int n
                                         shared_offset = in_sh_row * SHARED_MEM_SIZE + in_sh_col;
 
                                         // Multiply current filter location by target pixel and add to running sum
-                                        blur_sum += (int)( (float)input_pixels[shared_offset] * d_filter[filter_pos] );
+                                        blur_sum += (float)input_pixels[shared_offset] * d_filter[filter_pos];
 
                                 }
                                 // Always increment filter location
