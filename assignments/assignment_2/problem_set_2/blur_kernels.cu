@@ -467,7 +467,7 @@ void gaussianBlurSepCol(unsigned char *d_in, float *d_out, const int num_rows, c
 
                         if (pixel_row < num_rows){
                                 int global_offset = pixel_row * num_cols + gl_col;
-                                input_pixel_col[pixel_col] = d_in[global_offset];
+                                input_pixel_col[pixel_row] = d_in[global_offset];
                         }
                 }
         }
