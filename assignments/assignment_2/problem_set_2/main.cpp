@@ -295,7 +295,7 @@ int main(int argc, char const *argv[]){
     }
 
     // Compare results to ensure accuracy
-    checkResult(reference, outfile, 1e-5);
+    checkResult(reference, outfile, 5); //1e-5
 
     // Free Allocated Memory
     cudaFree(d_in_img);
