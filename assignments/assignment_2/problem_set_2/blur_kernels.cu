@@ -623,7 +623,7 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert red pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner(tmp_pixels, d_rblurred, num_rows, num_cols);
+        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_rblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
@@ -633,7 +633,7 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert green pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner(tmp_pixels, d_gblurred, num_rows, num_cols);
+        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_gblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
@@ -643,7 +643,7 @@ void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t 
         checkCudaErrors(cudaGetLastError());
 
         // Convert blue pixel results to unsigned chars and reset temp array
-        gaussianBlurSepRowCombiner(tmp_pixels, d_bblurred, num_rows, num_cols);
+        gaussianBlurSepRowCombiner<<<grid, block>>>(tmp_pixels, d_bblurred, num_rows, num_cols);
         cudaDeviceSynchronize();
         checkCudaErrors(cudaGetLastError());
 
