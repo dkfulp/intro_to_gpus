@@ -104,7 +104,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                 // Setup loop variables
                 int in_row, in_col;
                 int in_gl_row, in_gl_col;
-                int blur_sum = 0;
+                float blur_sum = 0;
                 int filter_pos = 0;
 
                 // Given the filter width, determine the correct row and col offsets
@@ -120,7 +120,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                                         int shared_offset = in_row * blockDim.x + in_col;
 
                                         // Multiply current filter location by target pixel and add to running sum
-                                        blur_sum += (int)( (float)input_pixels[shared_offset] * d_filter[filter_pos] );
+                                        blur_sum += (float)input_pixels[shared_offset] * d_filter[filter_pos];
                                 // Target Pixel is Not In Shared Memory
                                 } else {
                                         // Ensure target pixel global location is valid
@@ -131,7 +131,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                                                 int global_offset = in_gl_row * num_cols + in_gl_col;
 
                                                 // Multiply current filter location by target pixel and add to running sum
-                                                blur_sum += (int)( (float)d_in[global_offset] * d_filter[filter_pos] );
+                                                blur_sum += (float)d_in[global_offset] * d_filter[filter_pos];
                                         }
                                 }
                                 // Always increment filter location

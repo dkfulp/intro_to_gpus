@@ -236,9 +236,9 @@ int main(int argc, char const *argv[]){
 
     // Launch Kernel Code
     // Global
-    gaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    //gaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Shared V1
-    //gaussianBlurKernelSharedv1(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    gaussianBlurKernelSharedv1(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Shared V2
     //gaussianBlurKernelSharedv2(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter);
     // Shared Seperable Row
