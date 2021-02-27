@@ -390,6 +390,17 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
         // Make sure all threads have loaded before starting computation
         __syncthreads();
 
+        // Temporarily 
+        for (int i = 0; i < pixels_per_thread; i++){
+                int pixel_col = col_offset + i;
+
+                if (pixel_col < num_cols){
+                        int global_offset = gl_row * num_cols + pixel_col;
+                        d_out[global_offset] = input_pixel_row[pixel_col];
+                }
+        }
+
+        /**
         // Setup loop variables
         float blur_sum = 0;
         int in_col;
@@ -423,6 +434,7 @@ void gaussianBlurSepRow(unsigned char *d_in, float *d_out, const int num_rows, c
                         }       
                 }
         }
+        **/
 } 
 
 __global__ 
