@@ -6,6 +6,29 @@
 #define SHARED_MEM_SIZE 40
 
 
+
+// atomicAdd function
+inline __device__ void atomicAdd(unsigned char *address, unsigned char val) {
+        size_t offset = (size_t)address & 3;
+        uint32_t * address_as_ui = (uint32_t *)((char *)address - offset);
+        uint32_t old = *address_as_ui;
+        uint32_t shift = offset * 8;
+        uint32_t old_byte;
+        uint32_t newval;
+        uint32_t assumed;
+    
+        do {
+                    assumed = old;
+                    old_byte = (old >> shift) & 0xff;
+                    // preserve size in initial cast. Casting directly to uint32_t pads
+                    // negative signed values with 1's (e.g. signed -1 = unsigned ~0).
+                    newval = static_cast<uint8_t>(val + old_byte);
+                    newval = (old & ~(0x000000ff << shift)) | (newval << shift);
+                    old = atomicCAS(address_as_ui, assumed, newval);
+        } while (assumed != old);
+    }
+
+
 // gaussianBlurGlobal:
 // Kernel that computes a gaussian blur over a single RGB channel. 
 // This implementation in specific does not use shared memory to 
@@ -392,7 +415,7 @@ void gaussianBlurSepRow(unsigned char *d_in, unsigned char *d_out, const int num
         __syncthreads();
 
         // Setup loop variables
-        int blur_sum = 0;
+        float blur_sum = 0;
         int in_col;
 
         // Using shared memory, work over pixels per thread
@@ -407,7 +430,7 @@ void gaussianBlurSepRow(unsigned char *d_in, unsigned char *d_out, const int num
                         // Ensure target blur pixel location is valid
                         if (in_col >= 0 && in_col < num_cols){
                                 // Multiply current filter location by target pixel and add to running sum
-                                blur_sum += (int)( (float)input_pixel_row[in_col] * d_filter[filter_pos] );
+                                blur_sum += (float)input_pixel_row[in_col] * d_filter[filter_pos];
                         }
                         // Always increment filter location
                         filter_pos++;
@@ -418,7 +441,7 @@ void gaussianBlurSepRow(unsigned char *d_in, unsigned char *d_out, const int num
 
                 // Store the sum in the correct location of the global results using an atomic Add
                 int result_offset = result_row * num_cols + pixel_col;
-                d_out[result_offset] = (unsigned char)blur_sum;
+                atomicAdd(d_out + (result_offset), (unsigned char)__float2uint_rd(blur_sum));
         }
 } 
  
