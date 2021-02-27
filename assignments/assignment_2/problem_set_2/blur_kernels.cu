@@ -26,7 +26,7 @@ inline __device__ void atomicAdd(unsigned char *address, unsigned char val) {
                     newval = (old & ~(0x000000ff << shift)) | (newval << shift);
                     old = atomicCAS(address_as_ui, assumed, newval);
         } while (assumed != old);
-    }
+}
 
 
 // gaussianBlurGlobal:
@@ -48,7 +48,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                 int blur_offset = ((filterWidth-1)/2);
 
                 // Setup loop variables
-                int blur_sum = 0;
+                float blur_sum = 0;
                 int filter_pos = 0;
 
                 // Iterate from the furthest back row to the furthest forward row
@@ -61,7 +61,7 @@ void gaussianBlurGlobal(unsigned char *d_in, unsigned char *d_out, const int num
                                         int pixel_offset = in_row * num_cols + in_col;
 
                                         // Multiply current filter location by target pixel and add to running sum
-                                        blur_sum += (int)( (float)d_in[pixel_offset] * d_filter[filter_pos] );
+                                        blur_sum += (float)d_in[pixel_offset] * d_filter[filter_pos];
                                 }
                                 // Always increment filter location
                                 filter_pos++;

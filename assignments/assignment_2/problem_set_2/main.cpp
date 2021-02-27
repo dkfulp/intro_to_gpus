@@ -78,7 +78,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
             int blur_offset = ((filterWidth-1)/2);
 
             // Setup current loop variables
-            int blur_sum = 0;
+            float blur_sum = 0;
             int filter_pos = 0;
 
             // Iterate from the furthest back row to the furthest forward row
@@ -91,7 +91,7 @@ void serialGaussianBlur(unsigned char *in, unsigned char *out, const int num_row
                         int pixel_offset = in_row * num_cols + in_col;
 
                         // Multiply current filter location by target pixel and add to sum
-                        blur_sum += (int)( (float)in[pixel_offset] * filter[filter_pos] );
+                        blur_sum += (float)in[pixel_offset] * filter[filter_pos];
                     }
                     // Always increment filter location
                     filter_pos++;
@@ -236,13 +236,13 @@ int main(int argc, char const *argv[]){
 
     // Launch Kernel Code
     // Global
-    //gaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    gaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Shared V1
     //gaussianBlurKernelSharedv1(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Shared V2
     //gaussianBlurKernelSharedv2(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter);
     // Shared Seperable Row
-    gaussianBlurKernelSharedSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    //gaussianBlurKernelSharedSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
 
     // Copy the output image from device to host
     checkCudaErrors(cudaMemcpy(h_o_img, d_o_img, sizeof(uchar4) * numPixels, cudaMemcpyDeviceToHost));
