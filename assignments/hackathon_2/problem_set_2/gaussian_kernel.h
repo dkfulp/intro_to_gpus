@@ -10,27 +10,39 @@
  * kernels in the respective files.
  * */ 
 
-void gaussianBlurKernelGlobal(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
-        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
-        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+#define FILTER_WIDTH 9
+
+void MauriceTileGaussBlurKernelShared(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t rows, size_t cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
         float *d_filter,  int filterWidth);
 
-void gaussianBlurKernelSharedv1(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
-        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
-        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
-        float *d_filter,  int filterWidth);
-
-void gaussianBlurKernelSharedv2(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
-        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
-        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
-        float *d_filter);
-
-void gaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
-        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
-        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+void MauriceGaussBlurKernelGlobalSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t rows, size_t cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
         float *d_filter,  int filterWidth, float *tmp_pixels);
 
-void gaussianBlurKernelSharedSepCol(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
-        unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
-        unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+void MauriceGaussBlurKernelGlobalSepCol(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t rows, size_t cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
         float *d_filter,  int filterWidth, float *tmp_pixels);
+
+void DakotaGaussianBlurKernelGlobal(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+	float *d_filter,  int filterWidth);
+
+void DakotaGaussianBlurKernelShared(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+	float *d_filter,  int filterWidth);
+
+void DakotaGaussianBlurKernelSharedSepRow(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+	float *d_filter,  int filterWidth, float *tmp_pixels);
+
+void DakotaGaussianBlurKernelSharedSepCol(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t num_rows, size_t num_cols, 
+	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
+	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,
+	float *d_filter,  int filterWidth, float *tmp_pixels);
