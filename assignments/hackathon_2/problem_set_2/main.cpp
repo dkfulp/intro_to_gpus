@@ -235,33 +235,19 @@ int main(int argc, char const *argv[]){
     checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * fWidth * fWidth, cudaMemcpyHostToDevice));
 
     // Launch Kernel Code
-    // Global
-    //gaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
-    // Shared V1
-    //gaussianBlurKernelSharedv1(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
-    // Shared V2
-    //gaussianBlurKernelSharedv2(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter);
-    // Shared Seperable Row
-    //float *tmp_row_pixels;
-    //checkCudaErrors(cudaMalloc((void **)&tmp_row_pixels, sizeof(float) * numPixels));
-    //checkCudaErrors(cudaMemset(tmp_row_pixels, 0, sizeof(float) * numPixels));
-    //gaussianBlurKernelSharedSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth, tmp_row_pixels);
-    //cudaFree(tmp_row_pixels);
-    // Shared Seperable Col
-    //float *tmp_col_pixels;
-    //checkCudaErrors(cudaMalloc((void **)&tmp_col_pixels, sizeof(float) * numPixels));
-    //checkCudaErrors(cudaMemset(tmp_col_pixels, 0, sizeof(float) * numPixels));
-    //gaussianBlurKernelSharedSepCol(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth, tmp_col_pixels);
-    //cudaFree(tmp_col_pixels);
-
-    // Launch Kernel Code
     // Maurice Global
-    //MauriceTileGaussBlurKernelShared(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    MauriceTileGaussBlurKernelShared(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Dakota Global
-    DakotaGaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
+    //DakotaGaussianBlurKernelGlobal(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Dakota Shared
     //DakotaGaussianBlurKernelShared(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth);
     // Maurice Global Seperable Row
+    //float *tmp_sep_pixels;
+    //checkCudaErrors(cudaMalloc((void **)&tmp_sep_pixels, sizeof(float) * numPixels));
+    //checkCudaErrors(cudaMemset(tmp_sep_pixels, 0, sizeof(float) * numPixels));
+    //MauriceGaussBlurKernelGlobalSepRow(d_in_img, d_o_img, img.rows, img.cols, d_red, d_green, d_blue, d_red_blurred, d_green_blurred, d_blue_blurred, d_filter, fWidth, tmp_sep_pixels);
+    //cudaFree(tmp_sep_pixels);
+    // Maurice Global Seperable Col
     //float *tmp_sep_pixels;
     //checkCudaErrors(cudaMalloc((void **)&tmp_sep_pixels, sizeof(float) * numPixels));
     //checkCudaErrors(cudaMemset(tmp_sep_pixels, 0, sizeof(float) * numPixels));
@@ -331,7 +317,7 @@ int main(int argc, char const *argv[]){
     }
 
     // Compare results to ensure accuracy
-    checkResult(reference, outfile, 5); //1e-5
+    checkResult(reference, outfile, 1); //1e-5
 
     // Free Allocated Memory
     cudaFree(d_in_img);

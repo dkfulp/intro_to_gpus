@@ -10,8 +10,6 @@
  * kernels in the respective files.
  * */ 
 
-#define FILTER_WIDTH 9
-
 void MauriceTileGaussBlurKernelShared(uchar4* d_imrgba, uchar4 *d_oimrgba, size_t rows, size_t cols, 
 	unsigned char *d_red, unsigned char *d_green, unsigned char *d_blue, 
 	unsigned char *d_rblurred, unsigned char *d_gblurred, unsigned char *d_bblurred,

@@ -1,6 +1,7 @@
 #include "./gaussian_kernel.h" 
 
-#define O_TILE_WIDTH 4
+#define FILTER_WIDTH 9
+#define O_TILE_WIDTH 10
 #define BLOCK_WIDTH (O_TILE_WIDTH + (FILTER_WIDTH - 1))
 
 #define BLOCK 32
