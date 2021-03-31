@@ -96,32 +96,11 @@ void serialLaplacePDEJacobiSingleStep(float *U, float *U2, int num_rows, int num
 int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols, int max_iters, float err_thres){
     int iterations = 0;
 
-    // Print out serial temp
-    for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
-            int location = i * num_cols + j;
-            std::cout << std::setprecision(3) << U2[location] << "\t";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-
     // Go for maximum number of iterations
     while(true){
         // Call a single step of Jacobi
         serialLaplacePDEJacobiSingleStep(U, U2, num_rows, num_cols);
         iterations++;
-        // Print out serial temp
-        for (int i = 0; i < num_rows; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << std::setprecision(3) << U2[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
             return 1;
@@ -129,16 +108,6 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         // Call a second step of Jacobi
         serialLaplacePDEJacobiSingleStep(U2, U, num_rows, num_cols);
         iterations++;
-        // Print out serial temp
-        for (int i = 0; i < num_rows; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << std::setprecision(3) << U[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
             return 0;
@@ -259,6 +228,17 @@ int main(int argc, char const *argv[]){
             }
         }
     }
+
+    // Print out serial temp
+    for (int i = 0; i < num_rows; i++){
+        for (int j = 0; j < num_cols; j++){
+            int location = i * num_cols + j;
+            std::cout << std::setprecision(3) << host_res[location] << "\t";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
 
     // End serial timing
     auto stop = std::chrono::high_resolution_clock::now();
