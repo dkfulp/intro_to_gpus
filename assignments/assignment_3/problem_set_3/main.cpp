@@ -181,7 +181,7 @@ int main(int argc, char const *argv[]){
 
     // Initialize starting U matrix
     h_U = new float[num_rows * num_cols];
-    h_U2 = = new float[num_rows * num_cols];
+    h_U2 = new float[num_rows * num_cols];
 
     // Initialize U
     DissipationMatrixInitialization(h_U, num_rows, num_cols);
