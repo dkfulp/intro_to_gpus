@@ -234,6 +234,16 @@ int main(int argc, char const *argv[]){
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
     std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
 
+    // Print out serial temp
+    for (int i = 0; i < num_rows; i++){
+        for (int j = 0; j < num_cols; j++){
+            int location = i * num_cols + j;
+            std::cout << host_res[location] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
 
     // Call GPU Laplace PDE Jacobi Solver
 
