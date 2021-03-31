@@ -84,7 +84,7 @@ void serialLaplacePDEJacobiSingleStep(float *U, float *U2, int num_rows, int num
             int right_location = i * num_cols + (j + 1);
 
             // Calculate weighted average
-            float average = 0.25(U[up_location] + U[down_location] + U[left_location] + U[right_location]);
+            float average = 0.25 * (U[up_location] + U[down_location] + U[left_location] + U[right_location]);
 
             // Update cells value using surrounding cells
             U2[location] = average;
@@ -210,7 +210,7 @@ int main(int argc, char const *argv[]){
     int output_id = serialLaplacePDEJacobiSolver(h_U, h_U2, num_rows, num_cols, max_iters, err_thres);
 
     // Copy results to host final array
-    host_res = = new float[num_rows * num_cols];
+    host_res = new float[num_rows * num_cols];
     if (output_id == 0){
         // Copy to U into host_res
         for (int i = 0; i < num_rows; i++){
@@ -238,13 +238,13 @@ int main(int argc, char const *argv[]){
     // Call GPU Laplace PDE Jacobi Solver
 
     // Copy results to gpu final array
-    gpu_res = = new float[num_rows * num_cols];
+    gpu_res = new float[num_rows * num_cols];
 
 
     // Call MPI-GPU Laplace PDE Jacobi Solver
 
     // Copy results to mpi gpu final array
-    mpigpu_res = = new float[num_rows * num_cols];
+    mpigpu_res = new float[num_rows * num_cols];
 
 
     // Ensure correctness of all solutions in final arrays
