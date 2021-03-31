@@ -263,7 +263,9 @@ int main(int argc, char const *argv[]){
 
 
     // Ensure correctness of all solutions in final arrays
-    // TODO
+    std::cout << "Checking GPU Results" << std::endl;
+    //checkResult(host_res, gpu_res, num_rows, num_cols, 1e-5);
+    checkResult(host_res, gpu_res, num_rows, num_cols, 2);
 
     // Output Stage
     // TODO
