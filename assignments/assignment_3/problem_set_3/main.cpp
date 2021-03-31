@@ -99,7 +99,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
     for (int i = 0; i < num_rows; i++){
         for (int j = 0; j < num_cols; j++){
             int location = i * num_cols + j;
-            std::cout << U2[location] << " ";
+            std::cout << U2[location] << "\t\t";
         }
         std::cout << std::endl;
     }
@@ -115,7 +115,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         for (int i = 0; i < num_rows; i++){
             for (int j = 0; j < num_cols; j++){
                 int location = i * num_cols + j;
-                std::cout << U2[location] << "\t";
+                std::cout << U2[location] << "\t\t";
             }
             std::cout << std::endl;
         }
@@ -132,7 +132,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         for (int i = 0; i < num_rows; i++){
             for (int j = 0; j < num_cols; j++){
                 int location = i * num_cols + j;
-                std::cout << U[location] << " ";
+                std::cout << U[location] << "\t\t";
             }
             std::cout << std::endl;
         }
