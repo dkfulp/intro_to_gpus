@@ -35,7 +35,7 @@ void Jacobi_Single_Step(float *d_U, float *d_U2, int num_rows, int num_cols){
 ///// Helper Functions ////
 ///////////////////////////
 __global__ 
-void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, int error_count){
+void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, int *error_count){
     // Determine location of target cell in global memory
     // Shift every thread down and forward one to ensure not working on edge pixels
     int gl_row = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -48,7 +48,7 @@ void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, flo
 
         // Check to see if difference is below threshold
         if (d_U[location] - d_U2[location] > err_thres){
-            error_count = error_count + 1;
+            *error_count = *error_count + 1;
         }
     }
 }
@@ -75,7 +75,7 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
         // Increment iterations
         iterations++;
         // Check for ending conditions
-        Jacobi_Error_Check<<<grid,block>>>(d_U, d_U2, num_rows, num_cols, err_thres, error_count);
+        Jacobi_Error_Check<<<grid,block>>>(d_U, d_U2, num_rows, num_cols, err_thres, &error_count);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
         if (error_count == 0 || iterations > max_iters){
@@ -92,7 +92,7 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
         // Increment iterations
         iterations++;
         // Check for ending conditions
-        Jacobi_Error_Check<<<grid,block>>>(d_U2, d_U, num_rows, num_cols, err_thres, error_count);
+        Jacobi_Error_Check<<<grid,block>>>(d_U2, d_U, num_rows, num_cols, err_thres, &error_count);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
         if (error_count == 0 || iterations > max_iters){
