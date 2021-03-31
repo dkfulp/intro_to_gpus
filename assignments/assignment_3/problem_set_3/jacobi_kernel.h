@@ -9,4 +9,4 @@
  * on device. you must implement all other 
  * kernels in the respective files.
  * */ 
-int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_iters, float err_thres);
+int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_iters, float err_thres, float *err_count);

@@ -35,7 +35,7 @@ void Jacobi_Single_Step(float *d_U, float *d_U2, int num_rows, int num_cols){
 ///// Helper Functions ////
 ///////////////////////////
 __global__ 
-void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, int *error_count){
+void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, float *error_count){
     // Determine location of target cell in global memory
     // Shift every thread down and forward one to ensure not working on edge pixels
     int gl_row = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -48,7 +48,7 @@ void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, flo
 
         // Check to see if difference is below threshold
         if (d_U[location] - d_U2[location] > err_thres){
-            *error_count = *error_count + 1;
+            err_count[0] = err_count[0] + 1;
         }
     }
 }
@@ -57,7 +57,7 @@ void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, flo
 ///////////////////////////
 ///// Running Kernels /////
 ///////////////////////////
-int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_iters, float err_thres){
+int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_iters, float err_thres, float *err_count){
     // Set grid and block dimensions
     dim3 grid(std::ceil((float)(num_cols - 2)/(float)BLOCK),std::ceil((float)(num_rows - 2)/(float)BLOCK),1);
     dim3 block(BLOCK, BLOCK, 1);
@@ -75,15 +75,15 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
         // Increment iterations
         iterations++;
         // Check for ending conditions
-        Jacobi_Error_Check<<<grid,block>>>(d_U, d_U2, num_rows, num_cols, err_thres, &error_count);
+        Jacobi_Error_Check<<<grid,block>>>(d_U, d_U2, num_rows, num_cols, err_thres, err_count);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
-        if (error_count == 0 || iterations > max_iters){
+        if (err_count[0] == 0 || iterations > max_iters){
             // Return flag stating U2 has final information
             return 1;
         }
         // Reset error count
-        error_count = 0;
+        err_count[0] = 0;
 
         // Call a second step of Jacobi
         Jacobi_Single_Step<<<grid,block>>>(d_U2, d_U, num_rows, num_cols);
@@ -92,14 +92,14 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
         // Increment iterations
         iterations++;
         // Check for ending conditions
-        Jacobi_Error_Check<<<grid,block>>>(d_U2, d_U, num_rows, num_cols, err_thres, &error_count);
+        Jacobi_Error_Check<<<grid,block>>>(d_U2, d_U, num_rows, num_cols, err_thres, err_count);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
-        if (error_count == 0 || iterations > max_iters){
+        if (err_count[0] == 0 || iterations > max_iters){
             // Return flag stating U has final information
             return 0;
         }
         // Reset error count
-        error_count = 0;
+        err_count[0] = 0;
     }
 }
