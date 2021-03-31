@@ -95,6 +95,17 @@ void serialLaplacePDEJacobiSingleStep(float *U, float *U2, int num_rows, int num
 int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols, int max_iters, float err_thres){
     int iterations = 0;
 
+    // Print out serial temp
+    for (int i = 0; i < num_rows; i++){
+        for (int j = 0; j < num_cols; j++){
+            int location = i * num_cols + j;
+            std::cout << U2[location] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+
     // Go for maximum number of iterations
     while(true){
         // Call a single step of Jacobi
