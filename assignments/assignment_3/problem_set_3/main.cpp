@@ -119,7 +119,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
 
 int main(int argc, char const *argv[]){
     // Pointer to host and device inputs and outputs
-    float *h_U, *h_U2, *d_U, *d_U2, *err_count;
+    float *h_U, *h_U2, *d_U, *d_U2, *d_err_count;
     float *host_res, *gpu_res, *mpigpu_res;
     int max_iters;
     float err_thres;
@@ -199,7 +199,7 @@ int main(int argc, char const *argv[]){
     // Allocate nessecary device memory
     checkCudaErrors(cudaMalloc((void **)&d_U, sizeof(float) * num_rows * num_cols));
     checkCudaErrors(cudaMalloc((void **)&d_U2, sizeof(float) * num_rows * num_cols));
-    checkCudaErrors(cudaMalloc((void **)&err_count, sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_err_count, sizeof(float)));
 
     // Copy host matrices to GPU
     checkCudaErrors(cudaMemcpy(d_U, h_U, sizeof(float) * num_rows * num_cols, cudaMemcpyHostToDevice));
@@ -243,7 +243,7 @@ int main(int argc, char const *argv[]){
     // GPU Running Stage
     std::cout << "Running GPU Implementation" << std::endl;
     // Call GPU Laplace PDE Jacobi Solver
-    output_id = launch_Jacobi(d_U, d_U2, num_rows, num_cols, max_iters, err_thres, err_count);
+    output_id = launch_Jacobi(d_U, d_U2, num_rows, num_cols, max_iters, err_thres, d_err_count);
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
     // Copy results to gpu final array
