@@ -83,7 +83,7 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
             return 1;
         }
         // Reset error count
-        error_count = 0
+        error_count = 0;
 
         // Call a second step of Jacobi
         Jacobi_Single_Step<<<grid,block>>>(d_U2, d_U, num_rows, num_cols);
@@ -100,6 +100,6 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
             return 0;
         }
         // Reset error count
-        error_count = 0
+        error_count = 0;
     }
 }
