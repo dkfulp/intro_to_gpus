@@ -230,6 +230,7 @@ int main(int argc, char const *argv[]){
     }
 
     // Print out serial temp
+    /**
     for (int i = 0; i < num_rows; i++){
         for (int j = 0; j < num_cols; j++){
             int location = i * num_cols + j;
@@ -239,6 +240,7 @@ int main(int argc, char const *argv[]){
     }
     std::cout << std::endl;
     std::cout << std::endl;
+    **/
 
     // End serial timing
     auto stop = std::chrono::high_resolution_clock::now();
