@@ -67,12 +67,14 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
 
     // Go for maximum number of iterations
     while(true){
+        std::cout << "Step 1" << std::endl;
         // Call a single step of Jacobi
         Jacobi_Single_Step<<<grid,block>>>(d_U, d_U2, num_rows, num_cols);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
         // Increment iterations
         iterations++;
+        std::cout << "Step 2" << std::endl;
         // Check for ending conditions
         Jacobi_Error_Check<<<grid,block>>>(d_U, d_U2, num_rows, num_cols, err_thres, err_count);
         cudaDeviceSynchronize();
@@ -84,12 +86,14 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
         // Reset error count
         err_count[0] = 0;
 
+        std::cout << "Step 3" << std::endl;
         // Call a second step of Jacobi
         Jacobi_Single_Step<<<grid,block>>>(d_U2, d_U, num_rows, num_cols);
         cudaDeviceSynchronize();
 	    checkCudaErrors(cudaGetLastError());
         // Increment iterations
         iterations++;
+        std::cout << "Step 4" << std::endl;
         // Check for ending conditions
         Jacobi_Error_Check<<<grid,block>>>(d_U2, d_U, num_rows, num_cols, err_thres, err_count);
         cudaDeviceSynchronize();
