@@ -119,8 +119,8 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
 
 int main(int argc, char const *argv[]){
     // Pointer to host and device inputs and outputs
-    float * h_U, h_U2, d_U, d_U2;
-    float * host_res, gpu_res, mpigpu_res;
+    float *h_U, *h_U2, *d_U, *d_U2;
+    float *host_res, *gpu_res, *mpigpu_res;
     int max_iters;
     float err_thres;
     int num_rows, num_cols;
