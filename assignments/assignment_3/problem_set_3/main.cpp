@@ -100,6 +100,16 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         // Call a single step of Jacobi
         serialLaplacePDEJacobiSingleStep(U, U2, num_rows, num_cols);
         iterations++;
+        // Print out serial temp
+        for (int i = 0; i < num_rows; i++){
+            for (int j = 0; j < num_cols; j++){
+                int location = i * num_cols + j;
+                std::cout << U2[location] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
             return 1;
@@ -107,6 +117,16 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         // Call a second step of Jacobi
         serialLaplacePDEJacobiSingleStep(U2, U, num_rows, num_cols);
         iterations++;
+        // Print out serial temp
+        for (int i = 0; i < num_rows; i++){
+            for (int j = 0; j < num_cols; j++){
+                int location = i * num_cols + j;
+                std::cout << U[location] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
             return 0;
@@ -232,15 +252,6 @@ int main(int argc, char const *argv[]){
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
     std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
-
-    // Print out serial temp
-    for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
-            int location = i * num_cols + j;
-            std::cout << host_res[location] << " ";
-        }
-        std::cout << std::endl;
-    }
 
 
 
