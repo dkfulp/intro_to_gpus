@@ -179,6 +179,7 @@ int main(int argc, char const *argv[]){
         exit(1);
     }
 
+    // Serial Initialization Stage
     // Initialize starting U matrix
     h_U = new float[num_rows * num_cols];
     h_U2 = new float[num_rows * num_cols];
@@ -193,7 +194,8 @@ int main(int argc, char const *argv[]){
         }
     }
 
-    // GPU Stage
+
+    // GPU Initialization Stage
     // Allocate nessecary device memory
     checkCudaErrors(cudaMalloc((void **)&d_U, sizeof(float) * num_rows * num_cols));
     checkCudaErrors(cudaMalloc((void **)&d_U2, sizeof(float) * num_rows * num_cols));
@@ -202,13 +204,13 @@ int main(int argc, char const *argv[]){
     checkCudaErrors(cudaMemcpy(d_U, h_U, sizeof(float) * num_rows * num_cols, cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_U2, h_U2, sizeof(float) * num_rows * num_cols, cudaMemcpyHostToDevice));
 
+
     // Serial Running Stage
     // Start serial timing
     auto start = std::chrono::high_resolution_clock::now(); 
 
     // Call Serial Function
     int output_id = serialLaplacePDEJacobiSolver(h_U, h_U2, num_rows, num_cols, max_iters, err_thres);
-
     // Copy results to host final array
     host_res = new float[num_rows * num_cols];
     if (output_id == 0){
@@ -229,30 +231,25 @@ int main(int argc, char const *argv[]){
         }
     }
 
-    // Print out serial temp
-    /**
-    for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
-            int location = i * num_cols + j;
-            std::cout << std::setprecision(3) << host_res[location] << "\t";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-    **/
-
     // End serial timing
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
     std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
 
 
-
+    // GPU Running Stage
     // Call GPU Laplace PDE Jacobi Solver
-
+    output_id = launch_Jacobi(d_U, d_U2, num_rows, num_cols, max_iters, err_thres);
+    cudaDeviceSynchronize();
+    checkCudaErrors(cudaGetLastError());
     // Copy results to gpu final array
     gpu_res = new float[num_rows * num_cols];
+    if (output_id == 0){
+        checkCudaErrors(cudaMemcpy(gpu_res, d_U, sizeof(float) * num_rows * num_cols, cudaMemcpyDeviceToHost));
+    } else {
+        checkCudaErrors(cudaMemcpy(gpu_res, d_U2, sizeof(float) * num_rows * num_cols, cudaMemcpyDeviceToHost));
+    }
+
 
 
     // Call MPI-GPU Laplace PDE Jacobi Solver
