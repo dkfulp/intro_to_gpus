@@ -206,6 +206,7 @@ int main(int argc, char const *argv[]){
 
 
     // Serial Running Stage
+    std::cout << "Running Serial Implementation" << std::endl;
     // Start serial timing
     auto start = std::chrono::high_resolution_clock::now(); 
 
@@ -234,10 +235,12 @@ int main(int argc, char const *argv[]){
     // End serial timing
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+    std::cout << "Serial Implementation Completed!" << std::endl;
     std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
 
 
     // GPU Running Stage
+    std::cout << "Running GPU Implementation" << std::endl;
     // Call GPU Laplace PDE Jacobi Solver
     output_id = launch_Jacobi(d_U, d_U2, num_rows, num_cols, max_iters, err_thres);
     cudaDeviceSynchronize();
@@ -249,6 +252,7 @@ int main(int argc, char const *argv[]){
     } else {
         checkCudaErrors(cudaMemcpy(gpu_res, d_U2, sizeof(float) * num_rows * num_cols, cudaMemcpyDeviceToHost));
     }
+    std::cout << "GPU Implementation Completed!" << std::endl;
 
 
 
