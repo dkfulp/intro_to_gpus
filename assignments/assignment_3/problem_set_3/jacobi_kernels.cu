@@ -35,7 +35,7 @@ void Jacobi_Single_Step(float *d_U, float *d_U2, int num_rows, int num_cols){
 ///// Helper Functions ////
 ///////////////////////////
 __global__ 
-void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, float *error_count){
+void Jacobi_Error_Check(float *d_U, float *d_U2, int num_rows, int num_cols, float err_thres, float *err_count){
     // Determine location of target cell in global memory
     // Shift every thread down and forward one to ensure not working on edge pixels
     int gl_row = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -64,7 +64,6 @@ int launch_Jacobi(float *d_U, float *d_U2, int num_rows, int num_cols, int max_i
 
     // Repeatedly call Jacobi kernel 
     int iterations = 0;
-    int error_count = 0;
 
     // Go for maximum number of iterations
     while(true){
