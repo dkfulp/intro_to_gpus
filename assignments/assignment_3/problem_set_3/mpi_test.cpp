@@ -1,9 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cuda.h>
-#include <cuda_runtime.h>
 #include <cassert>
-#include <cstdio>
 #include <string>
 #include <cmath>
 #include <chrono>
@@ -14,19 +12,17 @@
 
 int main(int argc, char** argv) {
     // Initialize the MPI environment
-    MPI_Init(&argc, &argv);
+    MPI_Init(NULL, NULL);
 
-    // Get the number of processes
-    int world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    // Get the number of processors
+    int num_processors;
+    MPI_Comm_size(MPI_COMM_WORLD, &num_processors);
 
-    // Get the rank of the process
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    // Get current processors rank
+    int current_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &current_rank);
 
-    printf("Hello world! from rank %d"
-           " out of %d processors\n",
-           world_rank, world_size);
+    std::cout << "Hello from " << current_rank << "\n";
 
     // Finalize the MPI environment.
     MPI_Finalize();
