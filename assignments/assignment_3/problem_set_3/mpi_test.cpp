@@ -11,30 +11,23 @@
 #include <cstdlib>
 #include <mpi.h>
 
-int main(int argc, char *argv[]){
 
-    int id;
-    int ierr;
-    int p;
-    
-    ierr = MPI_Init( &argc, &argv );
+int main(int argc, char** argv) {
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
 
-    if (ierr != 0){
-        std::cout << "\n";
-        std::cout << "HELLO_MPI - Fatal error!\n";
-        std::cout << "  MPI_Init returned nonzero ierr.\n";
-        exit ( 1 );
-    }
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // Get number of processors
-    ierr = MPI_Comm_size ( MPI_COMM_WORLD, &p );
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    // Get processor id
-    ierr = MPI_Comm_rank ( MPI_COMM_WORLD, &id );
+    printf("Hello world! from rank %d"
+           " out of %d processors\n",
+           world_rank, world_size);
 
-    // Print Statement
-    std::cout << "P" << id << ":    'Hello, world!'\n";
-
-    // Finalize MPI
-    MPI_Finalize ( );
+    // Finalize the MPI environment.
+    MPI_Finalize();
 }
