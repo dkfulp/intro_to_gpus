@@ -401,7 +401,7 @@ int main(int argc, char** argv) {
         // Load buffer with bottom true row
         buffer_location = 0;
         for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows - 1) * num_cols + j;
+            int location = (rank_rows) * num_cols + j;
             buffer[buffer_location] = rank_U[location];
             buffer_location++;
         }
@@ -414,7 +414,7 @@ int main(int argc, char** argv) {
         // Store results as final row of matrix
         buffer_location = 0;
         for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows) * num_cols + j;
+            int location = (rank_rows+1) * num_cols + j;
             rank_U[location] = buffer[buffer_location];
             buffer_location++;
         }
