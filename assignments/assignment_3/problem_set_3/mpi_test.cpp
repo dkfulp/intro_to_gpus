@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
 
         // Receive rows from processor 0
         MPI_Status status;
-        MPI_Recv(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, i, MPI_COMM_WORLD, status);
+        MPI_Recv(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, current_rank, MPI_COMM_WORLD, status);
 
         // Copy data from buffer into matrix
         int buffer_location = 0;
