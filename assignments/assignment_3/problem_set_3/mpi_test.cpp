@@ -58,11 +58,11 @@ int serialLaplacePDEJacobiErrorCheck(float *U, float *U2, int num_rows, int num_
 
             // Check to see if difference is below threshold
             if (U[location] - U2[location] > err_thres){
-                return 0;
+                return 1;
             }
         }
     }
-    return 1;
+    return 0;
 }
 
 void serialLaplacePDEJacobiSingleStep(float *U, float *U2, int num_rows, int num_cols){
@@ -97,7 +97,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         serialLaplacePDEJacobiSingleStep(U, U2, num_rows, num_cols);
         iterations++;
         // Check for ending conditions
-        if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
+        if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 0 || iterations > max_iters){
             std::cout << "Iterations: " << iterations << std::endl;
             return 1;
         }
@@ -105,7 +105,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         serialLaplacePDEJacobiSingleStep(U2, U, num_rows, num_cols);
         iterations++;
         // Check for ending conditions
-        if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
+        if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 0 || iterations > max_iters){
             std::cout << "Iterations: " << iterations << std::endl;
             return 0;
         }
