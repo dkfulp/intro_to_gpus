@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &current_rank);
 
     // Pointer to host and device inputs and outputs
-    float *tot_U, *tot_U2, *rank_U, *rank_U2;
+    float *tot_U, *tot_U2, *rank_U, *rank_U2, *buffer;
     float *host_res, *mpi_res;
     int max_iters;
     float err_thres;
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    // Have processor zero initialize total matrix and run serial implementation
+    // Have processor zero run serial first
     if (current_rank == 0){
         // Run serial implementation
         ///////////////////////////////        
@@ -199,8 +199,10 @@ int main(int argc, char** argv) {
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
         std::cout << "Serial Implementation Completed!" << std::endl;
         std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
+    }
 
-
+    // Processor 0 reinitializes Matrix and sends buffers of data out to processors
+    if (current_rank == 0){
         // Run MPI Implementation
         ////////////////////////////
         // Reinitialize U
@@ -221,27 +223,101 @@ int main(int argc, char** argv) {
         // Determine number of rows processor zero will do
         rank_rows = num_rows % num_processors + rows_per_process;
 
-        /// Allocate space for its rows + 1
+        // Allocate space for its row + 1 ghost row
+        rank_U = new float[(rank_rows + 1) * num_cols];
+        rank_U2 = new float[(rank_rows + 1) * num_cols];
+
+        // Allocate buffer
+        buffer = new float[rows_per_process * num_cols];
+
+        // Iterate over each process
+        int row_counter = 0;
+        for (int i = 0; i < num_processors; i++){
+            // Read data into local rank_U
+            if (i == 0){
+                for (int j = 0; j < rank_rows; j++){
+                    for (int k = 0; k < num_cols; k++){
+                        int location = j * num_cols + k;
+                        rank_U[location] = tot_U[location];
+                        rank_U2[location] = tot_U[location];
+                    }
+                }
+                row_counter = rank_rows;
+            // Read data into buffer and then send
+            } else {
+                int buffer_location = 0;
+                for (int j = row_counter; j < row_counter+rows_per_process; j++){
+                    for (int k = 0; k < num_cols; k++){
+                        int location = j * num_cols + k;
+                        buffer[buffer_location] = tot_U[location];
+                        buffer_location++;
+                    }
+                }
+                row_counter = row_counter + rows_per_process;
+
+                // Send data to corresponding process
+                MPI_Send(buffer, rows_per_process*num_cols, MPI_FLOAT, i, i, MPI_COMM_WORLD);
+            }
+        }
+
         std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
-        
 
-        // Read nessecary self rows into rank_U and rank_U2
-        // Use MPI_Send buffer to send the rest of the rows to other processes
-
+    // Other processors receive data and store to their corresponding matrices
     } else {
         // Receive rows_per_process from rank 0
         MPI_Bcast(&rows_per_process, 1, MPI_INT, 0, MPI_COMM_WORLD);
         rank_rows = rows_per_process;
 
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+        // Allocate buffer
+        buffer = new float[rows_per_process * num_cols];
 
         if (current_rank == num_processors - 1){
-            // Allocate space for their rows + 1
+            // Allocate space for its row + 1 ghost row
+            rank_U = new float[(rank_rows + 1) * num_cols];
+            rank_U2 = new float[(rank_rows + 1) * num_cols];
         } else {
-            // Allocate space for their rows + 2
+            // Allocate space for its row + 2 ghost rows
+            rank_U = new float[(rank_rows + 2) * num_cols];
+            rank_U2 = new float[(rank_rows + 2) * num_cols];
         }
 
-        // Receive rows from rank zero
+        // Receive rows from processor 0
+        MPI_Status status;
+        MPI_Recv(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, i, MPI_COMM_WORLD, status);
+
+        // Copy data from buffer into matrix
+        int buffer_location = 0;
+        if (current_rank == num_processors - 1){
+            for (int i = 0; i < rows_per_process+1; i++){
+                for (int j = 0; j < num_cols; j++){
+                    int location = i * num_cols + j;
+                    if (i == 0){
+                        rank_U[location] = 0;
+                        rank_U2[location] = 0;
+                    } else {
+                        rank_U[location] = buffer[location];
+                        rank_U2[location] = buffer[location];
+                        buffer_location++;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < rows_per_process+2; i++){
+                for (int j = 0; j < num_cols; j++){
+                    int location = i * num_cols + j;
+                    if (i == 0 || i == rows_per_process+1){
+                        rank_U[location] = 0;
+                        rank_U2[location] = 0;
+                    } else {
+                        rank_U[location] = buffer[location];
+                        rank_U2[location] = buffer[location];
+                        buffer_location++;
+                    }
+                }
+            }
+        }
+
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
     }
 
     // sync up all processes
