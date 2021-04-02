@@ -108,6 +108,8 @@ int main(int argc, char** argv) {
     float err_thres;
     int num_rows, num_cols;
     int rank_rows, rows_per_process;
+    int buffer_location;
+    MPI_Status status;
 
     // File String Parameters
     std::string outfile;
@@ -247,7 +249,7 @@ int main(int argc, char** argv) {
                 row_counter = rank_rows;
             // Read data into buffer and then send
             } else {
-                int buffer_location = 0;
+                buffer_location = 0;
                 for (int j = row_counter; j < row_counter+rows_per_process; j++){
                     for (int k = 0; k < num_cols; k++){
                         int location = j * num_cols + k;
@@ -261,8 +263,6 @@ int main(int argc, char** argv) {
                 MPI_Send(buffer, rows_per_process*num_cols, MPI_FLOAT, i, i, MPI_COMM_WORLD);
             }
         }
-
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
 
     // Other processors receive data and store to their corresponding matrices
     } else {
@@ -284,11 +284,10 @@ int main(int argc, char** argv) {
         }
 
         // Receive rows from processor 0
-        MPI_Status status;
         MPI_Recv(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, current_rank, MPI_COMM_WORLD, &status);
 
         // Copy data from buffer into matrix
-        int buffer_location = 0;
+        buffer_location = 0;
         if (current_rank == num_processors - 1){
             for (int i = 0; i < rank_rows+1; i++){
                 for (int j = 0; j < num_cols; j++){
@@ -318,8 +317,6 @@ int main(int argc, char** argv) {
                 }
             }
         }
-
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
     }
 
     // sync up all processes
@@ -380,9 +377,6 @@ int main(int argc, char** argv) {
     }
 
 
-
-
-
     // Begin Jacobi computation
     /////////////////////////////
 
@@ -391,17 +385,100 @@ int main(int argc, char** argv) {
 
     // Do data handoff at boundaries
     if (current_rank == 0){
-        // MPI_Send bottom row to process 1
-        // MPI_Recv top row of process 1 as bottom row of data
+        // Load buffer with true bottom row
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (rank_rows - 1) * num_cols + j;
+            buffer[buffer_location] = rank_U[location];
+            buffer_location++;
+        }
+        // Send bottom row to process 1
+        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
+
+        // Recv top row of process 1
+        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
+
+        // Store results as final row of matrix
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (rank_rows) * num_cols + j;
+            rank_U[location] = buffer[buffer_location];
+            buffer_location++;
+        }
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+
     } else if (current_rank == num_processors - 1){
-        // MPI_Recv bottom row from previous process
-        // MPI_Send top row to previous process
+        // Recv bottom row from previous process
+        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+
+        // Store buffer as top row of matrix
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (0) * num_cols + j;
+            rank_U[location] = buffer[buffer_location];
+            buffer_location++;
+        }
+
+        // Load buffer with top true row
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (1) * num_cols + j;
+            buffer[buffer_location] = rank_U[location];
+            buffer_location++;
+        }
+        // Send top row to previous process
+        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
+
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
     }else {
-        // MPI_Recv bottom row from previous process
-        // MPI_Send top row to previous process
-        // MPI_Send bottom row to next process
-        // MPI_Recv top row of next process as bottom row of data
+        // Recv bottom row from previous process 
+        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+
+        // Store buffer as top row of matrix
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (0) * num_cols + j;
+            rank_U[location] = buffer[buffer_location];
+            buffer_location++;
+        }
+
+        // Load buffer with top true row
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (1) * num_cols + j;
+            buffer[buffer_location] = rank_U[location];
+            buffer_location++;
+        }
+        // Send top row to previous process
+        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
+
+
+        // Load buffer with bottom true row
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (rank_rows - 1) * num_cols + j;
+            buffer[buffer_location] = rank_U[location];
+            buffer_location++;
+        }
+        // Send bottom row to next process
+        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
+
+        // Recv top row of next process
+        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
+
+        // Store results as final row of matrix
+        buffer_location = 0;
+        for (int j = 0; j < num_cols; j++){
+            int location = (rank_rows) * num_cols + j;
+            rank_U[location] = buffer[buffer_location];
+            buffer_location++;
+        }
+
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
     }
+
+    // sync up all processes
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Compute one iterations of Jacobi
 
