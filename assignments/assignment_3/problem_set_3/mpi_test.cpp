@@ -7,6 +7,7 @@
 #include <chrono>
 #include <iomanip>
 #include <cstdlib>
+#include <cstring>
 #include <mpi.h>
 
 
