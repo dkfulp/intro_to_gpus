@@ -108,6 +108,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
             return 0;
         }
     }
+    std::cout << "Iterations: " << iterations << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -519,6 +520,7 @@ int main(int argc, char** argv) {
 
     // Upon completion, coalesce final results
     if (current_rank == 0){
+        std::cout << "Iterations: " << iterations << std::endl;
         // Allocate MPI Results Array
         mpi_res = new float[num_rows * num_cols];
 
