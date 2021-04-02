@@ -201,6 +201,8 @@ int main(int argc, char** argv) {
         std::cout << "Serial Duration: " << duration.count() << " micro seconds" << std::endl; 
     }
 
+
+
     // Processor 0 reinitializes Matrix and sends buffers of data out to processors
     if (current_rank == 0){
         // Run MPI Implementation
@@ -338,7 +340,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (current_rank == 1){
-        for (int i = 1; i < rank_rows; i++){
+        for (int i = 1; i < rank_rows+1; i++){
             for (int j = 0; j < num_cols; j++){
                 int location = i * num_cols + j;
                 std::cout << rank_U[location] << "\t";
@@ -352,7 +354,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (current_rank == 2){
-        for (int i = 1; i < rank_rows; i++){
+        for (int i = 1; i < rank_rows+1; i++){
             for (int j = 0; j < num_cols; j++){
                 int location = i * num_cols + j;
                 std::cout << rank_U[location] << "\t";
@@ -366,7 +368,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (current_rank == 3){
-        for (int i = 1; i < rank_rows; i++){
+        for (int i = 1; i < rank_rows+1; i++){
             for (int j = 0; j < num_cols; j++){
                 int location = i * num_cols + j;
                 std::cout << rank_U[location] << "\t";
