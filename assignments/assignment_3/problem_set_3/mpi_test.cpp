@@ -98,7 +98,6 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         iterations++;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 0 || iterations > max_iters){
-            std::cout << "Iterations: " << iterations << std::endl;
             return 1;
         }
         // Call a second step of Jacobi
@@ -106,7 +105,6 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         iterations++;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 0 || iterations > max_iters){
-            std::cout << "Iterations: " << iterations << std::endl;
             return 0;
         }
     }
@@ -450,7 +448,6 @@ int main(int argc, char** argv) {
 
             // Check for difference for self
             int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
-            std::cout << "Error Pass: " << error_pass << std::endl;
             // Gather differences from all other processes
             for (int i = 1; i < num_processors; i++){
                 int error_temp = 0;
@@ -458,7 +455,6 @@ int main(int argc, char** argv) {
                 // Add error to error total
                 error_pass = error_pass + error_temp;
             }
-            std::cout << "Error Pass: " << error_pass << std::endl;
             // Determine whether error is less than threshold
             int error_result;
             if (error_pass == 0){
@@ -523,7 +519,6 @@ int main(int argc, char** argv) {
 
     // Upon completion, coalesce final results
     if (current_rank == 0){
-        std::cout << "Iterations: " << iterations << std::endl;
         // Allocate MPI Results Array
         mpi_res = new float[num_rows * num_cols];
 
@@ -587,76 +582,6 @@ int main(int argc, char** argv) {
     if (current_rank == 0){
         checkResult(host_res, mpi_res, num_rows, num_cols, 2);
     }
-
-    /**
-    if (current_rank == 0){
-        for (int i = 0; i < rank_rows+1; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << rank_U[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (current_rank == 1){
-        for (int i = 0; i < rank_rows+2; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << rank_U[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (current_rank == 2){
-        for (int i = 0; i < rank_rows+2; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << rank_U[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (current_rank == 3){
-        for (int i = 0; i < rank_rows+1; i++){
-            for (int j = 0; j < num_cols; j++){
-                int location = i * num_cols + j;
-                std::cout << rank_U[location] << "\t";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-    }
-    **/
-
-
-    // Compute one iterations of Jacobi
-
-    // Check for ending condition with error threshold
-
-    // Repeat process until end
-
-        // If ending conditions met, all processes send data back to process 0
-
-        // Process 0 collects data and stores to variable
-
-        // Process 0 also checks against serial before ending
-    
 
 
     // Finalize the MPI environment.
