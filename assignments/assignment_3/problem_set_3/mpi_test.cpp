@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
         rank_rows = num_rows % num_processors + rows_per_process;
 
         /// Allocate space for its rows + 1
-        std::cout << "Process 0: " << rank_rows << "\n";
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
         
 
         // Read nessecary self rows into rank_U and rank_U2
@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
         MPI_Bcast(&rows_per_process, 1, MPI_INT, 0, MPI_COMM_WORLD);
         rank_rows = rows_per_process;
 
-        std::cout << "Process 0: " << rank_rows << "\n";
+        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
 
         if (current_rank == num_processors - 1){
             // Allocate space for their rows + 1
