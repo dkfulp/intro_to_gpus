@@ -329,135 +329,140 @@ int main(int argc, char** argv) {
     // Start timing
     // TODO
 
-    // Do data handoff at boundaries
-    if (current_rank == 0){
-        // Load buffer with true bottom row
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows - 1) * num_cols + j;
-            buffer[buffer_location] = rank_U[location];
-            buffer_location++;
+    // Iterate up to max iterations
+    int iterations = 0;
+    while (iterations < max_iters){
+        // Do data handoff at boundaries
+        if (current_rank == 0){
+            // Load buffer with true bottom row
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (rank_rows - 1) * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+            // Send bottom row to process 1
+            MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
+
+            // Recv top row of process 1
+            MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
+
+            // Store results as final row of matrix
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (rank_rows) * num_cols + j;
+                rank_U[location] = buffer[buffer_location];
+                buffer_location++;
+            }
+            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+
+        } else if (current_rank == num_processors - 1){
+            // Recv bottom row from previous process
+            MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+
+            // Store buffer as top row of matrix
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (0) * num_cols + j;
+                rank_U[location] = buffer[buffer_location];
+                buffer_location++;
+            }
+
+            // Load buffer with top true row
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (1) * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+            // Send top row to previous process
+            MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
+
+            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+        }else {
+            // Recv bottom row from previous process 
+            MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+
+            // Store buffer as top row of matrix
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (0) * num_cols + j;
+                rank_U[location] = buffer[buffer_location];
+                buffer_location++;
+            }
+
+            // Load buffer with top true row
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (1) * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+            // Send top row to previous process
+            MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
+
+
+            // Load buffer with bottom true row
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (rank_rows) * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+            // Send bottom row to next process
+            MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
+
+            // Recv top row of next process
+            MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
+
+            // Store results as final row of matrix
+            buffer_location = 0;
+            for (int j = 0; j < num_cols; j++){
+                int location = (rank_rows+1) * num_cols + j;
+                rank_U[location] = buffer[buffer_location];
+                buffer_location++;
+            }
+
+            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
         }
-        // Send bottom row to process 1
-        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
 
-        // Recv top row of process 1
-        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
+        // sync up all processes
+        MPI_Barrier(MPI_COMM_WORLD);
 
-        // Store results as final row of matrix
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows) * num_cols + j;
-            rank_U[location] = buffer[buffer_location];
-            buffer_location++;
-        }
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+        // Compute one iteration of Jacobi
+        if (current_rank == 0){
+            // Run single step 
+            serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
 
-    } else if (current_rank == num_processors - 1){
-        // Recv bottom row from previous process
-        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+            // Check for difference
 
-        // Store buffer as top row of matrix
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (0) * num_cols + j;
-            rank_U[location] = buffer[buffer_location];
-            buffer_location++;
-        }
+            // Copy results back into rank_U
+            memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
 
-        // Load buffer with top true row
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (1) * num_cols + j;
-            buffer[buffer_location] = rank_U[location];
-            buffer_location++;
-        }
-        // Send top row to previous process
-        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
 
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
-    }else {
-        // Recv bottom row from previous process 
-        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
+        } else if (current_rank == num_processors - 1){
+            // Run single step
+            serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
 
-        // Store buffer as top row of matrix
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (0) * num_cols + j;
-            rank_U[location] = buffer[buffer_location];
-            buffer_location++;
+            // Check for difference
+
+            // Copy results back into rank_U
+            memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
+
+        } else {
+            // Run single step
+            serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 2, num_cols);
+
+            // Check for difference
+
+            // Copy results back into rank_U
+            memcpy(rank_U, rank_U2, (rank_rows + 2)*num_cols*sizeof(float));
         }
 
-        // Load buffer with top true row
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (1) * num_cols + j;
-            buffer[buffer_location] = rank_U[location];
-            buffer_location++;
-        }
-        // Send top row to previous process
-        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
-
-
-        // Load buffer with bottom true row
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows) * num_cols + j;
-            buffer[buffer_location] = rank_U[location];
-            buffer_location++;
-        }
-        // Send bottom row to next process
-        MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank+1, MPI_COMM_WORLD);
-
-        // Recv top row of next process
-        MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank+1, current_rank, MPI_COMM_WORLD, &status);
-
-        // Store results as final row of matrix
-        buffer_location = 0;
-        for (int j = 0; j < num_cols; j++){
-            int location = (rank_rows+1) * num_cols + j;
-            rank_U[location] = buffer[buffer_location];
-            buffer_location++;
-        }
-
-        std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
+        // sync up all processes and increment iterations
+        MPI_Barrier(MPI_COMM_WORLD);
+        iterations++;
     }
-
-    // sync up all processes
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    // Compute one iteration of Jacobi
-    if (current_rank == 0){
-        // Run single step 
-        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
-
-        // Check for difference
-
-        // Copy results back into rank_U
-        memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
-
-
-    } else if (current_rank == num_processors - 1){
-        // Run single step
-        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
-
-        // Check for difference
-
-        // Copy results back into rank_U
-        memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
-
-    } else {
-        // Run single step
-        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 2, num_cols);
-
-        // Check for difference
-
-        // Copy results back into rank_U
-        memcpy(rank_U, rank_U2, (rank_rows + 2)*num_cols*sizeof(float));
-    }
-
-    // sync up all processes
-    MPI_Barrier(MPI_COMM_WORLD);
 
     if (current_rank == 0){
         for (int i = 0; i < rank_rows+1; i++){
