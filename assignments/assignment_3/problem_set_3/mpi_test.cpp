@@ -290,29 +290,29 @@ int main(int argc, char** argv) {
         // Copy data from buffer into matrix
         int buffer_location = 0;
         if (current_rank == num_processors - 1){
-            for (int i = 0; i < rows_per_process+1; i++){
+            for (int i = 0; i < rank_rows+1; i++){
                 for (int j = 0; j < num_cols; j++){
                     int location = i * num_cols + j;
                     if (i == 0){
                         rank_U[location] = 0;
                         rank_U2[location] = 0;
                     } else {
-                        rank_U[location] = buffer[location];
-                        rank_U2[location] = buffer[location];
+                        rank_U[location] = buffer[buffer_location];
+                        rank_U2[location] = buffer[buffer_location];
                         buffer_location++;
                     }
                 }
             }
         } else {
-            for (int i = 0; i < rows_per_process+2; i++){
+            for (int i = 0; i < rank_rows+2; i++){
                 for (int j = 0; j < num_cols; j++){
                     int location = i * num_cols + j;
                     if (i == 0 || i == rows_per_process+1){
                         rank_U[location] = 0;
                         rank_U2[location] = 0;
                     } else {
-                        rank_U[location] = buffer[location];
-                        rank_U2[location] = buffer[location];
+                        rank_U[location] = buffer[buffer_location];
+                        rank_U2[location] = buffer[buffer_location];
                         buffer_location++;
                     }
                 }
