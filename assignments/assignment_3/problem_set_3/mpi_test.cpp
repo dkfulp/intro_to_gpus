@@ -354,8 +354,6 @@ int main(int argc, char** argv) {
                 rank_U[location] = buffer[buffer_location];
                 buffer_location++;
             }
-            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
-
         } else if (current_rank == num_processors - 1){
             // Recv bottom row from previous process
             MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
@@ -377,8 +375,6 @@ int main(int argc, char** argv) {
             }
             // Send top row to previous process
             MPI_Send(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank-1, MPI_COMM_WORLD);
-
-            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
         }else {
             // Recv bottom row from previous process 
             MPI_Recv(buffer, num_cols, MPI_FLOAT, current_rank-1, current_rank, MPI_COMM_WORLD, &status);
@@ -422,8 +418,6 @@ int main(int argc, char** argv) {
                 rank_U[location] = buffer[buffer_location];
                 buffer_location++;
             }
-
-            std::cout << "Process " << current_rank << ": " << rank_rows << "\n";
         }
 
         // sync up all processes
@@ -434,29 +428,70 @@ int main(int argc, char** argv) {
             // Run single step 
             serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
 
-            // Check for difference
-
+            // Check for difference for self
+            int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
+            // Gather differences from all other processes
+            for (int i = 1; i < num_processors; i++){
+                int error_temp = 0;
+                MPI_Recv(&error_temp, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status);
+                // Add error to error total
+                error_pass = error_pass + error_temp;
+            }
+            // Determine whether error is less than threshold
+            int error_result;
+            if (error_pass == 0){
+                error_result = 1;
+                MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            } else {
+                error_result = 0;
+                MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            }
+            
             // Copy results back into rank_U
             memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
 
-
+            // Depending on error results, break out of loop
+            if (error_result == 1){
+                break;
+            }
         } else if (current_rank == num_processors - 1){
             // Run single step
             serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
 
-            // Check for difference
+            // Check for difference for self
+            int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
+            // Send error to process 0
+            MPI_Send(&error_pass, 1, MPI_INT, current_rank, current_rank, MPI_COMM_WORLD);
+            // Receive error results from process 0
+            int error_result;
+            MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
             // Copy results back into rank_U
             memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
 
+            // Depending on error results, break out of loop
+            if (error_result == 1){
+                break;
+            }
         } else {
             // Run single step
             serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 2, num_cols);
 
-            // Check for difference
+            // Check for difference for self
+            int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
+            // Send error to process 0
+            MPI_Send(&error_pass, 1, MPI_INT, current_rank, current_rank, MPI_COMM_WORLD);
+            // Receive error results from process 0
+            int error_result;
+            MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
             // Copy results back into rank_U
             memcpy(rank_U, rank_U2, (rank_rows + 2)*num_cols*sizeof(float));
+
+            // Depending on error results, break out of loop
+            if (error_result == 1){
+                break;
+            }
         }
 
         // sync up all processes and increment iterations
@@ -464,6 +499,73 @@ int main(int argc, char** argv) {
         iterations++;
     }
 
+    // Upon completion, coalesce final results
+    if (current_rank == 0){
+        // Allocate MPI Results Array
+        mpi_res = new float[num_rows * num_cols];
+
+        // Gather differences from all other processes
+        int row_counter = 0;
+        for (int i = 0; i < num_processors; i++){
+            if (i == 0){
+                for (int j = 0; j < rank_rows; j++){
+                    for (int k = 0; k < num_cols; k++){
+                        int location = j * num_cols + k;
+                        mpi_res[location] = rank_U[location];
+                    }
+                }
+                row_counter = rank_rows;
+            } else {
+                // Receive rows from next process in buffer
+                MPI_Recv(buffer, rows_per_process*num_cols, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+
+                // Write buffer results to results array
+                buffer_location = 0;
+                for (int j = row_counter; j < row_counter+rows_per_process; j++){
+                    for (int k = 0; k < num_cols; k++){
+                        int location = j * num_cols + k;
+                        mpi_res[location] = buffer[buffer_location];
+                        buffer_location++;
+                    }
+                }
+                row_counter = row_counter + rows_per_process;
+            }
+        }
+    } else if (current_rank == num_processors - 1){
+        // Put true rows data into buffer
+        buffer_location = 0;
+        for (int i = 1; i < rank_rows; i++){
+            for (int j = 0; j < num_cols; j++){
+                int location = i * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+        }
+        // Send data to corresponding process
+        MPI_Send(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    } else {
+        // Put true rows data into buffer
+        buffer_location = 0;
+        for (int i = 1; i < rank_rows+1; i++){
+            for (int j = 0; j < num_cols; j++){
+                int location = i * num_cols + j;
+                buffer[buffer_location] = rank_U[location];
+                buffer_location++;
+            }
+        }
+        // Send data to corresponding process
+        MPI_Send(buffer, rows_per_process*num_cols, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    }
+
+    // Sync all processes
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Check for valid answer
+    if (current_rank == 0){
+        checkResult(host_res, mpi_res, num_rows, num_cols, 2);
+    }
+
+    /**
     if (current_rank == 0){
         for (int i = 0; i < rank_rows+1; i++){
             for (int j = 0; j < num_cols; j++){
@@ -517,7 +619,7 @@ int main(int argc, char** argv) {
         std::cout << std::endl;
         std::cout << std::endl;
     }
-
+    **/
 
 
     // Compute one iterations of Jacobi
