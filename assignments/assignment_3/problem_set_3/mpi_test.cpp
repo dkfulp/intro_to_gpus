@@ -11,6 +11,24 @@
 #include <mpi.h>
 
 
+void checkResult(float *ref, float *gpu, int num_rows, int num_cols, float eps){
+     for (int i = 0; i < num_rows; i++){
+        for (int j = 0; j < num_cols; j++){
+            int location = i * num_cols + j;
+
+            if (ref[location] - gpu[location] > eps){
+                std::cerr << "Error at position (" << i << ", " << j << ")\n";
+
+                std::cerr << "Reference:: " << +ref[location] << "\n";
+                std::cerr << "GPU:: " << +gpu[location] << "\n";
+
+                exit(1);
+            }
+        }
+    }
+    std::cout << "PASSED!\n";
+}
+
 void DissipationMatrixInitialization(float *U, int num_rows, int num_cols){
     for (int i = 0; i < num_rows; i++){
         for (int j = 0; j < num_cols; j++){
