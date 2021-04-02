@@ -343,12 +343,12 @@ int main(int argc, char** argv) {
 
     // Begin Jacobi computation
     /////////////////////////////
-    auto mpi_start, mpi_stop, mpi_duration;
+
     if (current_rank == 0){
         std::cout << "Running MPI Implementation" << std::endl;
-        // Start serial timing
-        mpi_start = std::chrono::high_resolution_clock::now(); 
     }
+    // Start serial timing
+    auto mpi_start = std::chrono::high_resolution_clock::now(); 
     
 
     // Iterate up to max iterations
@@ -587,8 +587,8 @@ int main(int argc, char** argv) {
         checkResult(host_res, mpi_res, num_rows, num_cols, 2);
 
         // End serial timing
-        mpi_stop = std::chrono::high_resolution_clock::now();
-        mpi_duration = std::chrono::duration_cast<std::chrono::microseconds>(mpi_stop - mpi_start); 
+        auto mpi_stop = std::chrono::high_resolution_clock::now();
+        auto mpi_duration = std::chrono::duration_cast<std::chrono::microseconds>(mpi_stop - mpi_start); 
         std::cout << "MPI Implementation Completed!" << std::endl;
         std::cout << "MPI Duration: " << mpi_duration.count() << " micro seconds" << std::endl; 
     }
