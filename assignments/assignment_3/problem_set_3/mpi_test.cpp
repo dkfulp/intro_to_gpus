@@ -98,6 +98,7 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         iterations++;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U, U2, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
+            std::cout << "Iterations: " << iterations << std::endl;
             return 1;
         }
         // Call a second step of Jacobi
@@ -105,10 +106,10 @@ int serialLaplacePDEJacobiSolver(float *U, float *U2, int num_rows, int num_cols
         iterations++;
         // Check for ending conditions
         if (serialLaplacePDEJacobiErrorCheck(U2, U, num_rows, num_cols, err_thres) == 1 || iterations > max_iters){
+            std::cout << "Iterations: " << iterations << std::endl;
             return 0;
         }
     }
-    std::cout << "Iterations: " << iterations << std::endl;
 }
 
 int main(int argc, char** argv) {
