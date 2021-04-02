@@ -479,7 +479,7 @@ int main(int argc, char** argv) {
             // Check for difference for self
             int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
             // Send error to process 0
-            MPI_Send(&error_pass, 1, MPI_INT, current_rank, current_rank, MPI_COMM_WORLD);
+            MPI_Send(&error_pass, 1, MPI_INT, 0, current_rank, MPI_COMM_WORLD);
             // Receive error results from process 0
             int error_result;
             MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -498,7 +498,7 @@ int main(int argc, char** argv) {
             // Check for difference for self
             int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
             // Send error to process 0
-            MPI_Send(&error_pass, 1, MPI_INT, current_rank, current_rank, MPI_COMM_WORLD);
+            MPI_Send(&error_pass, 1, MPI_INT, 0, current_rank, MPI_COMM_WORLD);
             // Receive error results from process 0
             int error_result;
             MPI_Bcast(&error_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
