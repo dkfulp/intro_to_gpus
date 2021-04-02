@@ -425,6 +425,39 @@ int main(int argc, char** argv) {
     // sync up all processes
     MPI_Barrier(MPI_COMM_WORLD);
 
+    // Compute one iteration of Jacobi
+    if (current_rank == 0){
+        // Run single step 
+        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
+
+        // Check for difference
+
+        // Copy results back into rank_U
+        memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
+
+
+    } else if (current_rank == num_processors - 1){
+        // Run single step
+        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 1, num_cols);
+
+        // Check for difference
+
+        // Copy results back into rank_U
+        memcpy(rank_U, rank_U2, (rank_rows + 1)*num_cols*sizeof(float));
+
+    } else {
+        // Run single step
+        serialLaplacePDEJacobiSingleStep(rank_U, rank_U2, rank_rows + 2, num_cols);
+
+        // Check for difference
+
+        // Copy results back into rank_U
+        memcpy(rank_U, rank_U2, (rank_rows + 2)*num_cols*sizeof(float));
+    }
+
+    // sync up all processes
+    MPI_Barrier(MPI_COMM_WORLD);
+
     if (current_rank == 0){
         for (int i = 0; i < rank_rows+1; i++){
             for (int j = 0; j < num_cols; j++){
@@ -478,9 +511,6 @@ int main(int argc, char** argv) {
         std::cout << std::endl;
         std::cout << std::endl;
     }
-
-
-
 
 
 
