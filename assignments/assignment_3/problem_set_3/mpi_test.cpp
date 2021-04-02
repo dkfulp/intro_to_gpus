@@ -323,6 +323,22 @@ int main(int argc, char** argv) {
     // sync up all processes
     MPI_Barrier(MPI_COMM_WORLD);
 
+    if (current_rank == 0){
+        for (int i = 0; i < rank_rows; i++){
+            for (int j = 0; j < num_cols; j++){
+                int location = i * num_cols + j;
+                std::cout << rank_U[location] << "\t";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+
+
+
+
+
     // Begin Jacobi computation
     /////////////////////////////
 
