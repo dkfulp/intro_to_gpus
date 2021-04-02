@@ -450,6 +450,7 @@ int main(int argc, char** argv) {
 
             // Check for difference for self
             int error_pass = serialLaplacePDEJacobiErrorCheck(rank_U, rank_U2, rank_rows + 1, num_cols, err_thres);
+            std::cout << "Error Pass: " << error_pass << std::endl;
             // Gather differences from all other processes
             for (int i = 1; i < num_processors; i++){
                 int error_temp = 0;
@@ -457,6 +458,7 @@ int main(int argc, char** argv) {
                 // Add error to error total
                 error_pass = error_pass + error_temp;
             }
+            std::cout << "Error Pass: " << error_pass << std::endl;
             // Determine whether error is less than threshold
             int error_result;
             if (error_pass == 0){
